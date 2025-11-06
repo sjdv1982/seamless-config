@@ -1,0 +1,21 @@
+local:
+  tunnel: false
+  frontends:
+    - hostname: localhost
+      hashserver:
+        bufferdir: ~/seamless-buffers
+        conda: hashserver
+        network_interface: localhost
+        port_start: 10000
+        port_end: 19999
+
+newton:
+  tunnel: false
+  frontends:
+    - hostname: newton
+      hashserver:
+        bufferdir: ~/hashserver-bufferdir
+        conda: hashserver
+        network_interface: 0.0.0.0
+        port_start: 10000
+        port_end: 19999

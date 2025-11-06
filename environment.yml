@@ -1,0 +1,9 @@
+name: seamless-config
+channels:
+  - conda-forge
+dependencies:
+  - pyyaml
+  - jsonschema
+  - pip
+  - pip:
+      - -e .

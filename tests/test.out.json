@@ -1,0 +1,12 @@
+{
+  "hostname": "newton",
+  "network_interface": "0.0.0.0",
+  "conda": "hashserver",
+  "port_start": 10000,
+  "port_end": 19999,
+  "timeout": 600,
+  "workdir": "~/hashserver-bufferdir/myproject",
+  "key": "hashserver-newton-ro-{\"/myproject\".strip(\"/\").replace(\"/\", \"--\")}",
+  "command": "hashserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if 'ro' == 'rw' else ''}",
+  "handshake": "healthcheck"
+}
