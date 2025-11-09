@@ -1,7 +1,3 @@
-"""
-Forbidden tokens: /, --, "STAGE-"
-"""
-
 from typing import Optional
 
 _current_cluster: Optional[str] = None
