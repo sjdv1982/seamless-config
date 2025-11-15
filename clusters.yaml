@@ -19,3 +19,5 @@ newton:
         network_interface: 0.0.0.0
         port_start: 10000
         port_end: 19999
+
+local_cluster: local

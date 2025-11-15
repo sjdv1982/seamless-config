@@ -41,17 +41,31 @@ class Cluster:
 
 
 _clusters: dict[str, Cluster] = {}
+_local_cluster = None
 
 
 def define_clusters(clusters):
+    global _local_cluster
     assert isinstance(clusters, dict)
     _clusters.clear()
+    local_cluster = None
     for key, value in clusters.items():
         assert isinstance(key, str)
+        if key == "local_cluster":
+            assert isinstance(value, str)
+            local_cluster = value
+            continue
         assert isinstance(value, dict)
         cluster = Cluster.from_dict(value)
         _clusters[key] = cluster
+    if local_cluster is not None:
+        assert local_cluster in _clusters, (local_cluster, clusters.keys())
+        _local_cluster = local_cluster
 
 
 def get_cluster(cluster):
     return _clusters[cluster]
+
+
+def get_local_cluster():
+    return _local_cluster

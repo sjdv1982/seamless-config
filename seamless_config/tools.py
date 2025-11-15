@@ -52,6 +52,12 @@ def _configure_tool(tool: str, *, added: dict[str, Any], injected: dict[str, Any
             value = value0
         result[key] = value
 
+    # Special case: hostname
+    # => remove if CLUSTER is equal to get_local_cluster
+    cluster = injected.get("CLUSTER")
+    if cluster == get_local_cluster():
+        result.pop("hostname")
+
     return result
 
 
@@ -71,7 +77,7 @@ def _build_injected(mode: str, cluster: str, project, subproject, stage, substag
     return injected
 
 
-from .cluster import get_cluster, ClusterFrontend
+from .cluster import get_cluster, get_local_cluster, ClusterFrontend
 
 
 def _prepare_tool(
