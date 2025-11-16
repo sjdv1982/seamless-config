@@ -8,6 +8,12 @@ local:
         network_interface: localhost
         port_start: 10000
         port_end: 19999
+      database:
+        database_dir: ~/seamless-buffers
+        conda: seamless-database
+        network_interface: localhost
+        port_start: 20000
+        port_end: 29999
 
 newton:
   tunnel: false

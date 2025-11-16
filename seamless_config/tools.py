@@ -140,3 +140,30 @@ def configure_hashserver(
     added["port_end"] = frontend.hashserver.port_end
 
     return _configure_tool("hashserver", added=added, injected=injected)
+
+
+def configure_database(
+    mode: str,
+    *,
+    cluster=None,
+    project=None,
+    subproject=None,
+    stage=None,
+    substage=None,
+    frontend_name=None,
+):
+
+    frontend, injected = _prepare_tool(
+        "database", mode, cluster, project, subproject, stage, substage, frontend_name
+    )
+    assert frontend.hashserver is not None
+    injected["DATABASE_DIR"] = frontend.database.database_dir
+
+    added = {}
+    added["hostname"] = frontend.hostname
+    added["network_interface"] = frontend.database.network_interface
+    added["conda"] = frontend.database.conda
+    added["port_start"] = frontend.database.port_start
+    added["port_end"] = frontend.database.port_end
+
+    return _configure_tool("database", added=added, injected=injected)

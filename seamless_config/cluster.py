@@ -12,15 +12,27 @@ class ClusterFrontendHashserver:
 
 
 @dataclass
+class ClusterFrontendDatabase:
+    database_dir: str
+    conda: str
+    network_interface: str
+    port_start: int
+    port_end: int
+
+
+@dataclass
 class ClusterFrontend:
     hostname: str
     hashserver: Optional[ClusterFrontendHashserver] = None
+    database: Optional[ClusterFrontendDatabase] = None
 
     @classmethod
     def from_dict(cls, dic: dict[str, Any]):
         params = dic.copy()
         if "hashserver" in dic:
             params["hashserver"] = ClusterFrontendHashserver(**dic["hashserver"])
+        if "database" in dic:
+            params["database"] = ClusterFrontendDatabase(**dic["database"])
         return cls(**params)
 
 

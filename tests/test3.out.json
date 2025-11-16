@@ -1,0 +1,11 @@
+{
+  "network_interface": "localhost",
+  "conda": "seamless-database",
+  "port_start": 20000,
+  "port_end": 29999,
+  "timeout": 600,
+  "workdir": "~/seamless-buffers/myproject",
+  "key": "database-local-rw-{\"/myproject\".strip(\"/\").replace(\"/\", \"--\")}",
+  "command": "seamless-database --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}{' --writable' if 'rw' == 'rw' else ''} {workdir}/seamless.db",
+  "handshake": "healthcheck"
+}

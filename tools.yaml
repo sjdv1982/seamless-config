@@ -4,5 +4,14 @@ hashserver:
   timeout: 600
   workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGESUBDIR"
   key_template: 'hashserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
-  command_template: "hashserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if '$MODE' == 'rw' else ''}"
+  command_template: "hashserver --encoding sha-256 --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if '$MODE' == 'rw' else ''}"
+  handshake: healthcheck
+
+database:
+  ADDED: [hostname, network_interface, conda, port_start, port_end]
+  INJECTED: [CLUSTER, DATABASE_DIR, PROJECTSUBDIR, STAGESUBDIR, MODE]
+  timeout: 600
+  workdir_template: "$DATABASE_DIR$PROJECTSUBDIR$STAGESUBDIR"
+  key_template: 'database-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
+  command_template: "seamless-database --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}{' --writable' if '$MODE' == 'rw' else ''} {workdir}/seamless.db"
   handshake: healthcheck
