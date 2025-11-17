@@ -47,6 +47,7 @@ def set_workdir(workdir=_UNSET):
         del caller_frame
 
 
+from .config_files import load_tools
 from .select import (
     select_cluster,
     select_project,
