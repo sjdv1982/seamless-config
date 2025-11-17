@@ -47,11 +47,12 @@ def set_workdir(workdir=_UNSET):
         del caller_frame
 
 
-from .config_files import load_tools
+from .config_files import load_config_files, load_tools
 from .select import (
-    select_cluster,
-    select_project,
-    select_subproject,
     select_stage,
     select_substage,
 )
+
+set_stage = select_stage
+set_substage = select_substage
+__all__ = [select_stage, select_substage, set_stage, set_substage, load_config_files]

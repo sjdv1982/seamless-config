@@ -4,8 +4,8 @@
   "port_start": 10000,
   "port_end": 19999,
   "timeout": 600,
-  "workdir": "~/seamless-buffers/myproject",
-  "key": "hashserver-local-rw-{\"/myproject\".strip(\"/\").replace(\"/\", \"--\")}",
+  "workdir": "~/seamless-buffers/myproject/STAGE-test2",
+  "key": "hashserver-local-rw-{\"/myproject/STAGE-test2\".strip(\"/\").replace(\"/\", \"--\")}",
   "command": "hashserver --encoding sha-256 --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if 'rw' == 'rw' else ''}",
   "handshake": "healthcheck"
 }

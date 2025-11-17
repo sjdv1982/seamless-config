@@ -49,6 +49,10 @@ def select_substage(substage):
     _current_substage = substage
 
 
+def get_stage():
+    return _current_stage
+
+
 def get_current(cluster=None, project=None, subproject=None, stage=None, substage=None):
     if cluster is None:
         cluster = _current_cluster

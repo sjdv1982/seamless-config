@@ -5,8 +5,8 @@
   "port_start": 10000,
   "port_end": 19999,
   "timeout": 600,
-  "workdir": "~/hashserver-bufferdir/myproject",
-  "key": "hashserver-newton-ro-{\"/myproject\".strip(\"/\").replace(\"/\", \"--\")}",
-  "command": "hashserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if 'ro' == 'rw' else ''}",
+  "workdir": "~/hashserver-bufferdir/myproject/STAGE-test",
+  "key": "hashserver-newton-ro-{\"/myproject/STAGE-test\".strip(\"/\").replace(\"/\", \"--\")}",
+  "command": "hashserver --encoding sha-256 --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if 'ro' == 'rw' else ''}",
   "handshake": "healthcheck"
 }
