@@ -75,11 +75,14 @@ def _build_injected(mode: str, cluster: str, project, subproject, stage, substag
     if subproject is not None:
         projectsubdir += "/" + subproject
     injected["PROJECTSUBDIR"] = projectsubdir
+    stagedir = ""
     stagesubdir = ""
     if stage is not None:
-        stagesubdir = "/STAGE-" + stage
+        stagedir = "/STAGE-" + stage
+        stagesubdir = stagedir
         if substage is not None:
             stagesubdir += "SUBSTAGE-" + substage
+    injected["STAGEDIR"] = stagedir
     injected["STAGESUBDIR"] = stagesubdir
     return injected
 

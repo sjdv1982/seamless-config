@@ -1,17 +1,17 @@
 hashserver:
   ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
-  INJECTED: [CLUSTER, BUFFERDIR, PROJECTSUBDIR, STAGESUBDIR, MODE]
+  INJECTED: [CLUSTER, BUFFERDIR, PROJECTSUBDIR, STAGEDIR, MODE]
   timeout: 600
-  workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGESUBDIR"
-  key_template: 'hashserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
+  workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGEDIR"
+  key_template: 'hashserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGEDIR".strip("/").replace("/", "--")}'
   command_template: "hashserver --encoding sha-256 --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if '$MODE' == 'rw' else ''}"
   handshake: healthcheck
 
 database:
   ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
-  INJECTED: [CLUSTER, DATABASE_DIR, PROJECTSUBDIR, STAGESUBDIR, MODE]
+  INJECTED: [CLUSTER, DATABASE_DIR, PROJECTSUBDIR, STAGEDIR, MODE]
   timeout: 600
-  workdir_template: "$DATABASE_DIR$PROJECTSUBDIR$STAGESUBDIR"
-  key_template: 'database-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
+  workdir_template: "$DATABASE_DIR$PROJECTSUBDIR$STAGEDIR"
+  key_template: 'database-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGEDIR".strip("/").replace("/", "--")}'
   command_template: "seamless-database --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}{' --writable' if '$MODE' == 'rw' else ''} {workdir}/seamless.db"
   handshake: healthcheck

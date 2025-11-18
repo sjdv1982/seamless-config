@@ -33,19 +33,22 @@ def select_project(project):
 
 def select_subproject(subproject):
     global _current_subproject
-    _validate(subproject, "subproject")
+    if subproject is not None:
+        _validate(subproject, "subproject")
     _current_subproject = subproject
 
 
 def select_stage(stage):
     global _current_stage
-    _validate(stage, "stage")
+    if stage is not None:
+        _validate(stage, "stage")
     _current_stage = stage
 
 
 def select_substage(substage):
     global _current_substage
-    _validate(substage, "substage")
+    if substage is not None:
+        _validate(substage, "substage")
     _current_substage = substage
 
 

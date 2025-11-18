@@ -2,10 +2,7 @@ import json
 import seamless_config
 import seamless_config.tools
 
-seamless_config.select_stage("test")
-seamless_config.set_workdir()
-seamless_config.config_files.load_config_files()
-
+seamless_config.init()
 
 config = seamless_config.tools.configure_hashserver(mode="ro")
 print(json.dumps(config, indent=2))

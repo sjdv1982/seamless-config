@@ -47,11 +47,18 @@ class StageBlock:
     entries: list[Any]
 
 
+_tools_loaded = False
+
+
 # Tool definition
 def load_tools() -> dict:
     """
     Load tool definitions from tools.yaml and register them inside seamless_config.tools.
     """
+    global _tools_loaded
+    if _tools_loaded:
+        return
+    _tools_loaded = True
     tools_file = Path(__file__).with_name(TOOLS_FILENAME)
     with tools_file.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
