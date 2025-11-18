@@ -52,11 +52,18 @@ def _configure_tool(tool: str, *, added: dict[str, Any], injected: dict[str, Any
             value = value0
         result[key] = value
 
-    # Special case: hostname
+    # Special cases: hostname, ssh_hostname, tunnel
     # => remove if CLUSTER is equal to get_local_cluster
     cluster = injected.get("CLUSTER")
     if cluster == get_local_cluster():
         result.pop("hostname")
+        result.pop("ssh_hostname", None)
+        result.pop("tunnel", None)
+
+    # Special cases: tunnel
+    # => remove if False
+    if not result.get("tunnel"):
+        result.pop("tunnel", None)
 
     return result
 
