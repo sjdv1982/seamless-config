@@ -112,7 +112,7 @@ def _prepare_tool(
                 f"No frontend of cluster '{cluster}' can support a {tool}"
             )
     injected = _build_injected(mode, cluster, project, subproject, stage, substage)
-    return frontend, injected
+    return clus, frontend, injected
 
 
 def configure_hashserver(
@@ -126,14 +126,17 @@ def configure_hashserver(
     frontend_name=None,
 ):
 
-    frontend, injected = _prepare_tool(
+    clus, frontend, injected = _prepare_tool(
         "hashserver", mode, cluster, project, subproject, stage, substage, frontend_name
     )
     assert frontend.hashserver is not None
     injected["BUFFERDIR"] = frontend.hashserver.bufferdir
 
     added = {}
+    added["tunnel"] = clus.tunnel
     added["hostname"] = frontend.hostname
+    if frontend.ssh_hostname is not None:
+        added["ssh_hostname"] = frontend.ssh_hostname
     added["network_interface"] = frontend.hashserver.network_interface
     added["conda"] = frontend.hashserver.conda
     added["port_start"] = frontend.hashserver.port_start
@@ -153,14 +156,17 @@ def configure_database(
     frontend_name=None,
 ):
 
-    frontend, injected = _prepare_tool(
+    clus, frontend, injected = _prepare_tool(
         "database", mode, cluster, project, subproject, stage, substage, frontend_name
     )
     assert frontend.hashserver is not None
     injected["DATABASE_DIR"] = frontend.database.database_dir
 
     added = {}
+    added["tunnel"] = clus.tunnel
     added["hostname"] = frontend.hostname
+    if frontend.ssh_hostname is not None:
+        added["ssh_hostname"] = frontend.ssh_hostname
     added["network_interface"] = frontend.database.network_interface
     added["conda"] = frontend.database.conda
     added["port_start"] = frontend.database.port_start

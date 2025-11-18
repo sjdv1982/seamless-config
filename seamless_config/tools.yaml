@@ -1,5 +1,5 @@
 hashserver:
-  ADDED: [hostname, network_interface, conda, port_start, port_end]
+  ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
   INJECTED: [CLUSTER, BUFFERDIR, PROJECTSUBDIR, STAGESUBDIR, MODE]
   timeout: 600
   workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGESUBDIR"
@@ -8,7 +8,7 @@ hashserver:
   handshake: healthcheck
 
 database:
-  ADDED: [hostname, network_interface, conda, port_start, port_end]
+  ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
   INJECTED: [CLUSTER, DATABASE_DIR, PROJECTSUBDIR, STAGESUBDIR, MODE]
   timeout: 600
   workdir_template: "$DATABASE_DIR$PROJECTSUBDIR$STAGESUBDIR"

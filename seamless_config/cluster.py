@@ -23,6 +23,7 @@ class ClusterFrontendDatabase:
 @dataclass
 class ClusterFrontend:
     hostname: str
+    ssh_hostname: Optional[str] = None
     hashserver: Optional[ClusterFrontendHashserver] = None
     database: Optional[ClusterFrontendDatabase] = None
 
