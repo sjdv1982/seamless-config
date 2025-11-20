@@ -106,6 +106,12 @@ def _prepare_tool(
     cluster, project, subproject, stage, substage = get_current(
         cluster, project, subproject, stage, substage
     )
+    if subproject == "":
+        subproject = None
+    if stage == "":
+        stage = None
+    if substage == "":
+        substage = None
     clus = get_cluster(cluster)
     for frontend in clus.frontends:
         if frontend_name is not None and frontend.hostname != frontend_name:
@@ -132,12 +138,11 @@ def configure_hashserver(
     project=None,
     subproject=None,
     stage=None,
-    substage=None,
     frontend_name=None,
 ):
 
     clus, frontend, injected = _prepare_tool(
-        "hashserver", mode, cluster, project, subproject, stage, substage, frontend_name
+        "hashserver", mode, cluster, project, subproject, stage, None, frontend_name
     )
     assert frontend.hashserver is not None
     injected["BUFFERDIR"] = frontend.hashserver.bufferdir
@@ -162,12 +167,11 @@ def configure_database(
     project=None,
     subproject=None,
     stage=None,
-    substage=None,
     frontend_name=None,
 ):
 
     clus, frontend, injected = _prepare_tool(
-        "database", mode, cluster, project, subproject, stage, substage, frontend_name
+        "database", mode, cluster, project, subproject, stage, None, frontend_name
     )
     assert frontend.hashserver is not None
     injected["DATABASE_DIR"] = frontend.database.database_dir

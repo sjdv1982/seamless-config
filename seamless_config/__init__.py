@@ -72,17 +72,36 @@ def set_stage(
     from .config_files import load_config_files
     from .select import (
         select_stage,
+        get_stage,
         select_substage,
     )
 
     global _initialized
+    old_stage = get_stage()
+    old_initialized = _initialized
+
+    stage_change = old_stage != stage or not old_initialized
+
     _initialized = True
 
     select_stage(stage)
-    select_substage(substage)
+    select_substage(
+        substage
+    )  # TODO: re-evaluate job delegation after substage change? or do it dynamically, when the first job is submitted?
     if workdir is _UNSET and not _set_workdir_called:
         _set_workdir(_UNSET, 2)
-    return load_config_files()
+    result = load_config_files()
+    if stage_change:
+        try:
+            import seamless_remote
+        except ImportError:  # seamless_remote was not installed
+            pass
+        else:
+            import seamless_remote.buffer_remote
+
+            seamless_remote.buffer_remote.activate()
+
+    return result
 
 
 def set_substage(substage: Optional[str] = None):

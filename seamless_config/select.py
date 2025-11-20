@@ -56,7 +56,13 @@ def get_stage():
     return _current_stage
 
 
-def get_current(cluster=None, project=None, subproject=None, stage=None, substage=None):
+def get_current(
+    cluster: Optional[str] = None,
+    project: Optional[str] = None,
+    subproject: Optional[str] = None,
+    stage: Optional[str] = None,
+    substage: Optional[str] = None,
+):
     if cluster is None:
         cluster = _current_cluster
         if cluster is None:
