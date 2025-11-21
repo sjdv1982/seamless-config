@@ -98,8 +98,10 @@ def set_stage(
             pass
         else:
             import seamless_remote.buffer_remote
+            import seamless_remote.database_remote
 
             seamless_remote.buffer_remote.activate()
+            seamless_remote.database_remote.activate()
 
     return result
 
