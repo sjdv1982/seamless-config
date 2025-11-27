@@ -18,16 +18,12 @@ def collect_remote_clients(cluster: str) -> Dict[str, List[Dict[str, Any]]]:
     buffer_entries: list[dict[str, Any]] = []
 
     for info in database_remote.inspect_extern_clients():
-        database_entries.append(
-            {"readonly": info["readonly"], "url": info.get("url")}
-        )
+        database_entries.append({"readonly": info["readonly"], "url": info.get("url")})
 
     for info in database_remote.inspect_launched_clients():
         if info.get("cluster") != cluster:
             continue
-        database_entries.append(
-            {"readonly": info["readonly"], "url": info.get("url")}
-        )
+        database_entries.append({"readonly": info["readonly"], "url": info.get("url")})
 
     for info in buffer_remote.inspect_extern_clients():
         entry: dict[str, Any] = {"readonly": info["readonly"]}
@@ -87,7 +83,9 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
         if url is None:
             raise ValueError("Database client entry requires 'url'")
         name = f"extern-db-{idx}"
-        database_remote.define_extern_client(name, "database", url=url, readonly=readonly)
+        database_remote.define_extern_client(
+            name, "database", url=url, readonly=readonly
+        )
         database_names.append(name)
 
     database_remote.activate(no_main=True, extern_clients=database_names)
@@ -97,7 +95,7 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
         readonly = entry.get("readonly", True)
         url = entry.get("url")
         directory = entry.get("directory")
-        name = f"extern-buffer-{idx}"        
+        name = f"extern-buffer-{idx}"
         if directory is not None and url is None:
             buffer_remote.define_extern_client(
                 name, "bufferfolder", directory=directory, readonly=True
@@ -109,5 +107,5 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
         else:
             raise ValueError("Buffer client entry requires 'url' or 'directory'")
         buffer_names.append(name)
-        
+
     buffer_remote.activate(no_main=True, extern_clients=buffer_names)
