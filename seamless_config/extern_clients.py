@@ -77,7 +77,9 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
     _config._remote_clients_set = True
 
     database = clients.get("database", [])
+    database_names = []
     buffer = clients.get("buffer", [])
+    buffer_names = []
 
     for idx, entry in enumerate(database):
         readonly = entry.get("readonly", True)
@@ -86,12 +88,16 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
             raise ValueError("Database client entry requires 'url'")
         name = f"extern-db-{idx}"
         database_remote.define_extern_client(name, "database", url=url, readonly=readonly)
+        database_names.append(name)
 
+    database_remote.activate(no_main=True, extern_clients=database_names)
+
+    buffer_names = []
     for idx, entry in enumerate(buffer):
         readonly = entry.get("readonly", True)
         url = entry.get("url")
         directory = entry.get("directory")
-        name = f"extern-buffer-{idx}"
+        name = f"extern-buffer-{idx}"        
         if directory is not None and url is None:
             buffer_remote.define_extern_client(
                 name, "bufferfolder", directory=directory, readonly=True
@@ -102,3 +108,6 @@ def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
             )
         else:
             raise ValueError("Buffer client entry requires 'url' or 'directory'")
+        buffer_names.append(name)
+        
+    buffer_remote.activate(no_main=True, extern_clients=buffer_names)
