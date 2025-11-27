@@ -31,6 +31,8 @@ def test_set_remote_clients_registers_clients(monkeypatch, tmp_path):
 
     monkeypatch.setattr(database_remote, "define_extern_client", db_define)
     monkeypatch.setattr(buffer_remote, "define_extern_client", buf_define)
+    monkeypatch.setattr(database_remote, "DISABLED", True)
+    monkeypatch.setattr(buffer_remote, "DISABLED", True)
     monkeypatch.setattr(seamless_config, "_initialized", False)
     monkeypatch.setattr(seamless_config, "_remote_clients_set", False)
 

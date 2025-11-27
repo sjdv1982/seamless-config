@@ -5,6 +5,11 @@ _current_project: Optional[str] = None
 _current_subproject: Optional[str] = None
 _current_stage: Optional[str] = None
 _current_substage: Optional[str] = None
+_current_execution: str = "process"
+_execution_source: Optional[str] = None  # "command" or "manual"
+_execution_command_seen: bool = False
+
+EXECUTION_MODES = ("process", "spawn", "remote")
 
 from . import ConfigurationError
 
@@ -52,8 +57,45 @@ def select_substage(substage):
     _current_substage = substage
 
 
+def select_execution(execution: str, *, source: str = "manual") -> None:
+    global _current_execution, _execution_source, _execution_command_seen
+    if not isinstance(execution, str):
+        raise ValueError("execution must be a string")
+    if execution not in EXECUTION_MODES:
+        valid = ", ".join(EXECUTION_MODES)
+        raise ValueError(f"execution must be one of: {valid}")
+    _current_execution = execution
+    _execution_source = source
+    if source == "command":
+        _execution_command_seen = True
+
+
 def get_stage():
     return _current_stage
+
+
+def get_execution() -> str:
+    return _current_execution
+
+
+def execution_was_set_explicitly() -> bool:
+    return _execution_source is not None
+
+
+def execution_command_seen() -> bool:
+    return _execution_command_seen
+
+
+def reset_execution_before_load() -> None:
+    global _execution_source, _execution_command_seen, _current_execution
+    _execution_command_seen = False
+    if _execution_source == "command":
+        _execution_source = None
+        _current_execution = "process"
+
+
+def get_selected_cluster() -> Optional[str]:
+    return _current_cluster
 
 
 def get_current(

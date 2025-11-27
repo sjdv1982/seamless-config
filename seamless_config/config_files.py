@@ -9,7 +9,14 @@ import yaml  # type: ignore
 
 from . import get_workdir
 from .cluster import define_clusters as register_clusters
-from .select import get_stage, select_cluster, select_project, select_subproject
+from .select import (
+    get_stage,
+    reset_execution_before_load,
+    select_cluster,
+    select_execution,
+    select_project,
+    select_subproject,
+)
 from .tools import define_tools
 
 TOOLS_FILENAME = "tools.yaml"
@@ -80,6 +87,12 @@ def _handle_cluster(value: Any, source: Path) -> None:
     select_cluster(value)
 
 
+def _handle_execution(value: Any, source: Path) -> None:
+    if not isinstance(value, str):
+        raise ValueError(f"{source}: 'execution' command expects a string value")
+    select_execution(value, source="command")
+
+
 def _handle_project(value: Any, source: Path) -> None:
     if not isinstance(value, str):
         raise ValueError(f"{source}: 'project' command expects a string value")
@@ -100,6 +113,7 @@ def _handle_clusters(value: Any, source: Path) -> None:
 
 COMMAND_SPECS: dict[str, CommandSpec] = {
     "cluster": CommandSpec(handler=_handle_cluster),
+    "execution": CommandSpec(handler=_handle_execution),
     "project": CommandSpec(handler=_handle_project),
     "subproject": CommandSpec(handler=_handle_subproject),
     "clusters": CommandSpec(handler=_handle_clusters, priority=True),
@@ -132,6 +146,7 @@ def load_config_files() -> None:
     """
     Load Seamless configuration files and execute their commands.
     """
+    reset_execution_before_load()
     load_tools()
     _load_clusters()
     commands = _build_command_invocations(_collect_command_entries())

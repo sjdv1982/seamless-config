@@ -1,5 +1,6 @@
 import inspect
 import os
+import warnings
 from typing import Optional
 
 
@@ -63,6 +64,30 @@ def set_workdir(workdir=_UNSET):
     return _set_workdir(workdir, 1)
 
 
+def _report_execution_requirements():
+    from .select import (
+        execution_command_seen,
+        execution_was_set_explicitly,
+        get_execution,
+        get_selected_cluster,
+    )
+
+    execution = get_execution()
+    cluster = get_selected_cluster()
+    if not execution_command_seen() and not execution_was_set_explicitly():
+        warnings.warn(
+            "No 'execution' command found; Seamless falls back to 'process'",
+            stacklevel=3,
+        )
+    if execution == "remote" and cluster is None:
+        raise ConfigurationError("Execution is 'remote' but no cluster was defined")
+    if execution != "remote" and cluster is None:
+        warnings.warn(
+            "No cluster defined; running without persistence (define a cluster when using 'execution: remote')",
+            stacklevel=3,
+        )
+
+
 def set_stage(
     stage: Optional[str] = None, substage: Optional[str] = None, *, workdir=_UNSET
 ):
@@ -87,8 +112,6 @@ def set_stage(
 
     stage_change = old_stage != stage or not old_initialized
 
-    _initialized = True
-
     select_stage(stage)
     select_substage(
         substage
@@ -96,17 +119,23 @@ def set_stage(
     if workdir is _UNSET and not _set_workdir_called:
         _set_workdir(_UNSET, 2)
     result = load_config_files()
+    _report_execution_requirements()
+    _initialized = True
     if stage_change:
-        try:
-            import seamless_remote
-        except ImportError:  # seamless_remote was not installed
-            pass
-        else:
-            import seamless_remote.buffer_remote
-            import seamless_remote.database_remote
+        from .select import get_selected_cluster
 
-            seamless_remote.buffer_remote.activate()
-            seamless_remote.database_remote.activate()
+        cluster = get_selected_cluster()
+        if cluster is not None:
+            try:
+                import seamless_remote
+            except ImportError:  # seamless_remote was not installed
+                pass
+            else:
+                import seamless_remote.buffer_remote
+                import seamless_remote.database_remote
+
+                seamless_remote.buffer_remote.activate()
+                seamless_remote.database_remote.activate()
 
     return result
 
