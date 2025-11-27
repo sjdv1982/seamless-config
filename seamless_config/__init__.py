@@ -10,6 +10,7 @@ class ConfigurationError(RuntimeError):
 _workdir = None
 _set_workdir_called = False
 _initialized = False
+_remote_clients_set = False
 _UNSET = object()
 
 
@@ -22,6 +23,8 @@ def _set_workdir(workdir, nback):
     """
     Optionally set the workdir. If no argument is provided, infer it from the caller.
     """
+    if _remote_clients_set:
+        raise RuntimeError("remote clients already set; workdir cannot be changed")
     global _workdir, _set_workdir_called
     _set_workdir_called = True
     if workdir is not _UNSET:
@@ -76,6 +79,8 @@ def set_stage(
         select_substage,
     )
 
+    if _remote_clients_set:
+        raise RuntimeError("remote clients already set; stage cannot be changed")
     global _initialized
     old_stage = get_stage()
     old_initialized = _initialized
@@ -134,6 +139,6 @@ def init(*, workdir=_UNSET):
 
 
 __all__ = [init, set_stage, set_substage, set_workdir]
-from .extern_clients import collect_remote_clients
+from .extern_clients import collect_remote_clients, set_remote_clients
 
-__all__.append(collect_remote_clients)
+__all__ += ["collect_remote_clients", "set_remote_clients"]

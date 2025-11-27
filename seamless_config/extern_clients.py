@@ -63,3 +63,42 @@ def collect_remote_clients(cluster: str) -> Dict[str, List[Dict[str, Any]]]:
         buffer_entries.append({"readonly": readonly, "directory": workdir})
 
     return {"database": database_entries, "buffer": buffer_entries}
+
+
+def set_remote_clients(clients: Dict[str, List[Dict[str, Any]]]) -> None:
+    """
+    Configure extern buffer/database clients from a collected definition.
+    """
+    from seamless_remote import buffer_remote, database_remote
+    import seamless_config as _config
+
+    if _config._initialized:
+        raise RuntimeError("Cannot set remote clients after initialization")
+    _config._remote_clients_set = True
+
+    database = clients.get("database", [])
+    buffer = clients.get("buffer", [])
+
+    for idx, entry in enumerate(database):
+        readonly = entry.get("readonly", True)
+        url = entry.get("url")
+        if url is None:
+            raise ValueError("Database client entry requires 'url'")
+        name = f"extern-db-{idx}"
+        database_remote.define_extern_client(name, "database", url=url, readonly=readonly)
+
+    for idx, entry in enumerate(buffer):
+        readonly = entry.get("readonly", True)
+        url = entry.get("url")
+        directory = entry.get("directory")
+        name = f"extern-buffer-{idx}"
+        if directory is not None and url is None:
+            buffer_remote.define_extern_client(
+                name, "bufferfolder", directory=directory, readonly=True
+            )
+        elif url is not None:
+            buffer_remote.define_extern_client(
+                name, "hashserver", url=url, readonly=readonly
+            )
+        else:
+            raise ValueError("Buffer client entry requires 'url' or 'directory'")
