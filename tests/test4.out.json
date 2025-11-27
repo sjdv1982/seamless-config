@@ -1,0 +1,15 @@
+{
+  "network_interface": "localhost",
+  "conda": "seamless-jobserver",
+  "port_start": 20000,
+  "port_end": 29999,
+  "file_parameters": {
+    "database": [],
+    "buffer": []
+  },
+  "timeout": 600,
+  "workdir": "/tmp",
+  "key": "jobserver-local-rw-{\"/myproject/STAGE-test4\".strip(\"/\").replace(\"/\", \"--\")}",
+  "command": "seamless-jobserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}",
+  "handshake": "healthcheck"
+}

@@ -21,11 +21,20 @@ class ClusterFrontendDatabase:
 
 
 @dataclass
+class ClusterFrontendJobserver:
+    conda: str
+    network_interface: str
+    port_start: int
+    port_end: int
+
+
+@dataclass
 class ClusterFrontend:
     hostname: str
     ssh_hostname: Optional[str] = None
     hashserver: Optional[ClusterFrontendHashserver] = None
     database: Optional[ClusterFrontendDatabase] = None
+    jobserver: Optional[ClusterFrontendJobserver] = None
 
     @classmethod
     def from_dict(cls, dic: dict[str, Any]):
@@ -34,17 +43,22 @@ class ClusterFrontend:
             params["hashserver"] = ClusterFrontendHashserver(**dic["hashserver"])
         if "database" in dic:
             params["database"] = ClusterFrontendDatabase(**dic["database"])
+        if "jobserver" in dic:
+            params["jobserver"] = ClusterFrontendJobserver(**dic["jobserver"])
+
         return cls(**params)
 
 
 @dataclass
 class Cluster:
+    name: str
     tunnel: bool
     frontends: list[ClusterFrontend]
 
     @classmethod
-    def from_dict(cls, dic: dict[str, Any]):
+    def from_dict(cls, name, dic: dict[str, Any]):
         params = dic.copy()
+        params["name"] = name
         frontends = []
         for frontend_dict in dic["frontends"]:
             frontend = ClusterFrontend.from_dict(frontend_dict)
@@ -69,7 +83,7 @@ def define_clusters(clusters):
             local_cluster = value
             continue
         assert isinstance(value, dict)
-        cluster = Cluster.from_dict(value)
+        cluster = Cluster.from_dict(key, value)
         _clusters[key] = cluster
     if local_cluster is not None:
         assert local_cluster in _clusters, (local_cluster, clusters.keys())

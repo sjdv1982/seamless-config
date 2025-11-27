@@ -87,7 +87,7 @@ def _build_injected(mode: str, cluster: str, project, subproject, stage, substag
     return injected
 
 
-from .cluster import get_cluster, get_local_cluster, ClusterFrontend
+from .cluster import get_cluster, get_local_cluster, Cluster, ClusterFrontend
 
 
 def _prepare_tool(
@@ -99,7 +99,7 @@ def _prepare_tool(
     stage,
     substage,
     frontend_name,
-) -> tuple[ClusterFrontend, dict[str, str]]:
+) -> tuple[Cluster, ClusterFrontend, dict[str, str]]:
     from .select import get_current
     from . import ConfigurationError
 
@@ -173,7 +173,7 @@ def configure_database(
     clus, frontend, injected = _prepare_tool(
         "database", mode, cluster, project, subproject, stage, None, frontend_name
     )
-    assert frontend.hashserver is not None
+    assert frontend.database is not None
     injected["DATABASE_DIR"] = frontend.database.database_dir
 
     added = {}
@@ -187,3 +187,43 @@ def configure_database(
     added["port_end"] = frontend.database.port_end
 
     return _configure_tool("database", added=added, injected=injected)
+
+
+def configure_jobserver(
+    *,
+    cluster=None,
+    project=None,
+    subproject=None,
+    stage=None,
+    substage=None,
+    frontend_name=None,
+):
+    from .extern_clients import collect_remote_clients
+
+    dummy_mode = "rw"  # not used for this tool
+    clus, frontend, injected = _prepare_tool(
+        "jobserver",
+        dummy_mode,
+        cluster,
+        project,
+        subproject,
+        stage,
+        substage,
+        frontend_name,
+    )
+    assert frontend.jobserver is not None
+
+    added = {}
+    added["tunnel"] = clus.tunnel
+    added["hostname"] = frontend.hostname
+    if frontend.ssh_hostname is not None:
+        added["ssh_hostname"] = frontend.ssh_hostname
+    added["network_interface"] = frontend.jobserver.network_interface
+    added["conda"] = frontend.jobserver.conda
+    added["port_start"] = frontend.jobserver.port_start
+    added["port_end"] = frontend.jobserver.port_end
+
+    remote_client_parameters = collect_remote_clients(clus.name)
+    added["file_parameters"] = remote_client_parameters
+
+    return _configure_tool("jobserver", added=added, injected=injected)
