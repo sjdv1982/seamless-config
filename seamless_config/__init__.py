@@ -134,3 +134,6 @@ def init(*, workdir=_UNSET):
 
 
 __all__ = [init, set_stage, set_substage, set_workdir]
+from .extern_clients import collect_remote_clients
+
+__all__.append(collect_remote_clients)
