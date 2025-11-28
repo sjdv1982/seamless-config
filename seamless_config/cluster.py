@@ -54,6 +54,7 @@ class Cluster:
     name: str
     tunnel: bool
     frontends: list[ClusterFrontend]
+    workers: Optional[int] = None
 
     @classmethod
     def from_dict(cls, name, dic: dict[str, Any]):

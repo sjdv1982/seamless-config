@@ -82,8 +82,8 @@ def load_tools() -> dict:
 
 # Command language
 def _handle_cluster(value: Any, source: Path) -> None:
-    if not isinstance(value, str):
-        raise ValueError(f"{source}: 'cluster' command expects a string value")
+    if not isinstance(value, str) and value is not None:
+        raise ValueError(f"{source}: 'cluster' command expects a string value or null")
     select_cluster(value)
 
 

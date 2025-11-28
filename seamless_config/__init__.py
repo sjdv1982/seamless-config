@@ -123,6 +123,8 @@ def set_stage(
     _initialized = True
     if stage_change:
         from .select import get_selected_cluster
+        from .cluster import get_cluster, get_local_cluster
+        from .select import get_execution
 
         cluster = get_selected_cluster()
         if cluster is not None:
@@ -133,9 +135,17 @@ def set_stage(
             else:
                 import seamless_remote.buffer_remote
                 import seamless_remote.database_remote
+                import seamless_remote.jobserver_remote
 
                 seamless_remote.buffer_remote.activate()
                 seamless_remote.database_remote.activate()
+                if get_execution() == "remote":
+                    seamless_remote.jobserver_remote.activate()
+        if get_execution() == "spawn":
+            from seamless_transformer.worker import spawn
+
+            local_cluster = get_cluster(get_local_cluster())
+            spawn(local_cluster.workers)
 
     return result
 

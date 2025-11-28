@@ -26,7 +26,8 @@ def _validate(s, name):
 
 def select_cluster(cluster):
     global _current_cluster
-    _validate(cluster, "cluster")
+    if cluster is not None:
+        _validate(cluster, "cluster")
     _current_cluster = cluster
 
 
