@@ -142,7 +142,7 @@ def set_stage(
                 if get_execution() == "remote":
                     seamless_remote.jobserver_remote.activate()
         if get_execution() == "spawn":
-            from seamless_transformer.worker import spawn
+            from seamless.transformer.worker import spawn
 
             local_cluster = get_cluster(get_local_cluster())
             spawn(local_cluster.workers)
