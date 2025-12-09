@@ -170,6 +170,10 @@ def init(*, workdir=_UNSET):
     Sets the workdir if not set previously.
     If no argument is provided, infer it from the caller.
     """
+    import seamless
+
+    if seamless.is_worker():
+        return
     if _initialized:
         return
     if workdir is _UNSET and not _set_workdir_called:
