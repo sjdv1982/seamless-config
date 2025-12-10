@@ -142,7 +142,7 @@ def set_stage(
                 if get_execution() == "remote":
                     seamless_remote.jobserver_remote.activate()
         if get_execution() == "spawn":
-            from seamless.transformer.worker import spawn
+            from seamless.transformer import spawn
 
             local_cluster = get_cluster(get_local_cluster())
             spawn(local_cluster.workers)
@@ -181,7 +181,13 @@ def init(*, workdir=_UNSET):
     return set_stage()
 
 
-__all__ = [init, set_stage, set_substage, set_workdir]
 from .extern_clients import collect_remote_clients, set_remote_clients
 
-__all__ += ["collect_remote_clients", "set_remote_clients"]
+__all__ = [
+    "init",
+    "set_stage",
+    "set_substage",
+    "set_workdir",
+    "collect_remote_clients",
+    "set_remote_clients",
+]
