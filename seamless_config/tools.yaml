@@ -19,6 +19,7 @@ database:
 jobserver:
   ADDED:
     [
+      workers,
       hostname,
       network_interface,
       conda,
@@ -31,5 +32,5 @@ jobserver:
   timeout: 600
   workdir_template: "/tmp"
   key_template: 'jobserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
-  command_template: "seamless-jobserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}"
+  command_template: "seamless-jobserver --workers {workers} --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}"
   handshake: healthcheck

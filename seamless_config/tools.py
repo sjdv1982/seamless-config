@@ -212,8 +212,10 @@ def configure_jobserver(
         frontend_name,
     )
     assert frontend.jobserver is not None
+    assert clus.workers is not None
 
     added = {}
+    added["workers"] = clus.workers
     added["tunnel"] = clus.tunnel
     added["hostname"] = frontend.hostname
     if frontend.ssh_hostname is not None:
