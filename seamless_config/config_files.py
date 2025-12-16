@@ -122,15 +122,19 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
 
 def _load_clusters() -> dict[str, Any]:
     """
-    Load cluster definitions from $HOME/.seamless/clusters.yaml into _clusters.
+    Load cluster definitions from $HOME/.seamless/clusters.yaml
+    and $HOME/.seamless/clusters/*.yaml and into _clusters.
     """
     global _clusters
     home_dir = os.environ.get("HOME") or str(Path.home())
-    clusters_path = Path(home_dir) / ".seamless" / "clusters.yaml"
+    clusters_path_yaml = Path(home_dir) / ".seamless" / "clusters.yaml"
+    clusters_pathdir = Path(home_dir) / ".seamless" / "clusters"
+    sub_yamls = clusters_pathdir.glob("*.yaml")
     data: Any = {}
-    if clusters_path.is_file():
-        with clusters_path.open("r", encoding="utf-8") as handle:
-            data = yaml.safe_load(handle)
+    for clusters_path in [clusters_path_yaml] + list(sub_yamls):
+        if clusters_path.is_file():
+            with clusters_path.open("r", encoding="utf-8") as handle:
+                data.update(yaml.safe_load(handle))
     if data is None:
         data = {}
     if not isinstance(data, dict):

@@ -229,3 +229,124 @@ def configure_jobserver(
     added["file_parameters"] = remote_client_parameters
 
     return _configure_tool("jobserver", added=added, injected=injected)
+
+
+def configure_daskserver(
+    *,
+    cluster=None,
+    project=None,
+    subproject=None,
+    stage=None,
+    substage=None,
+    frontend_name=None,
+):
+    dummy_mode = "rw"  # not used for this tool
+    clus, frontend, injected = _prepare_tool(
+        "daskserver",
+        dummy_mode,
+        cluster,
+        project,
+        subproject,
+        stage,
+        substage,
+        frontend_name,
+    )
+    assert frontend.daskserver is not None
+
+    added = {}
+    assert clus.type is not None
+    if clus.type == "local":
+        cluster_string = "distributed::LocalCluster"
+    elif clus.type == "slurm":
+        cluster_string = "dask_jobqueue::SLURMCluster"
+    elif clus.type == "oar":
+        cluster_string = "dask_jobqueue::OARCluster"
+    else:
+        raise ValueError(clus.type)
+    added["cluster_string"] = cluster_string
+    added["tunnel"] = clus.tunnel
+    added["hostname"] = frontend.hostname
+    if frontend.ssh_hostname is not None:
+        added["ssh_hostname"] = frontend.ssh_hostname
+    added["network_interface"] = frontend.jobserver.network_interface
+    queue_name = clus.default_queue  # TODO: make configurable
+    assert queue_name is not None
+    assert isinstance(clus.queues, dict)
+    queue = clus.queues[queue_name]
+    added["conda"] = queue.conda
+    added["port_start"] = frontend.daskserver.port_start
+    added["port_end"] = frontend.daskserver.port_end
+
+    # TODO: make queue parameters overrulable in .seamless.yaml (advanced use case)
+
+    params = {}
+
+    """
+    #### B
+
+    The following parameters are read from the status file "parameters" dict,
+    and propagated into jobqueue. If marked as "optional", propagation only takes place if defined.
+
+    Otherwise, if no default is specified, they are mandatory.
+
+    - walltime
+    - cores
+    - memory
+    - tmpdir. Propagated into both "local-directory" and "temp-directory". Default: /tmp
+    - partition, propagated into "queue". Optional
+    - job_extra_directives: Optional, but must be a list if defined. Example: ["-p grappe"]
+    - project. Optional (e.g. "capsid")
+    - memory_per_core_property_name. Optional.
+    - job_script_prologue: Optional, but must be a list if defined.
+    """
+
+    params["walltime"] = queue.walltime
+    params["cores"] = queue.cores
+    if queue.cores is None and clus.type == "local":
+        params["cores"] = clus.workers
+    params["memory"] = queue.memory
+    params["tmpdir"] = queue.tmpdir
+    params["partition"] = queue.partition
+    params["job_extra_directives"] = queue.job_extra_directives
+    params["project"] = queue.project
+    params["memory_per_core_property_name"] = clus.memory_per_core_property_name
+    params["job_script_prologue"] = queue.job_script_prologue
+
+    """
+    #### C
+
+    The following parameters are read from the status file "parameters" dict,
+    and propagated into Dask. If marked as "optional", propagation only takes place if defined.
+
+    Otherwise, if no default is specified, they are mandatory.
+
+    - unknown-task-duration => distributed.scheduler.unknown-task-duration. Default: 1m
+
+    - target-duration => distributed.scheduler.target-duration. Default: 10m
+
+    - internal-port-range => distributed.worker.port and distributed.nanny.port. Default: port-range command-line parameter
+
+    - lifetime-stagger => distributed.worker.lifetime-stagger. Default: 4m
+
+    - lifetime => distributed.worker.lifetime. Default: walltime minus lifetime-stagger minus 1m
+
+    In case of default: Note that "walltime" is in hh:mm:ss format. All three values (walltime, lifetime-stagger and 1m) are understood by `dask.utils.parse_timedelta`. The subtraction result `td` can be converted to string using f"{int(td.total_seconds())}s"
+
+    - dask-resources => distributed.worker.resources. Optional.
+    """
+
+    params["unknown-task-duration"] = queue.unknown_task_duration
+    params["target-duration"] = queue.target_duration
+    # params["internal-port-range"] = frontend.daskserver. ... # TODO
+    params["lifetime-stagger"] = queue.lifetime_stagger
+    params["lifetime"] = queue.lifetime
+    params["dask-resources"] = queue.dask_resources
+
+    # TODO: params["transformation_throttle"] = ...
+
+    params["extra_dask_config"] = queue.extra_dask_config
+
+    params = {k: v for k, v in params.items() if v is not None}
+    added["file_parameters"] = params
+
+    return _configure_tool("daskserver", added=added, injected=injected)

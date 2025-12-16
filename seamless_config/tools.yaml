@@ -34,3 +34,24 @@ jobserver:
   key_template: 'jobserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
   command_template: "seamless-jobserver --workers {workers} --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}"
   handshake: healthcheck
+
+daskserver:
+  ADDED:
+    [
+      cluster_string,
+      hostname,
+      network_interface,
+      conda,
+      port_start,
+      port_end,
+      tunnel,
+      file_parameters,
+    ]
+  INJECTED: [CLUSTER, PROJECTSUBDIR, STAGESUBDIR]
+  timeout: 600
+  workdir_template: "/tmp"
+  key_template: 'daskserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
+  command_template: "seamless-dask-wrapper {cluster_string} --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout}"
+  handshake:
+    path: health
+    port_name: dashboard_port
