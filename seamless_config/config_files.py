@@ -12,9 +12,13 @@ from .cluster import define_clusters as register_clusters
 from .select import (
     get_stage,
     reset_execution_before_load,
+    reset_queue_before_load,
+    reset_remote_before_load,
     select_cluster,
     select_execution,
     select_project,
+    select_queue,
+    select_remote,
     select_subproject,
 )
 from .tools import define_tools
@@ -93,6 +97,18 @@ def _handle_execution(value: Any, source: Path) -> None:
     select_execution(value, source="command")
 
 
+def _handle_queue(value: Any, source: Path) -> None:
+    if not isinstance(value, str):
+        raise ValueError(f"{source}: 'queue' command expects a string value")
+    select_queue(value, source="command")
+
+
+def _handle_remote(value: Any, source: Path) -> None:
+    if value is not None and not isinstance(value, str):
+        raise ValueError(f"{source}: 'remote' command expects a string value or null")
+    select_remote(value, source="command")
+
+
 def _handle_project(value: Any, source: Path) -> None:
     if not isinstance(value, str):
         raise ValueError(f"{source}: 'project' command expects a string value")
@@ -114,6 +130,8 @@ def _handle_clusters(value: Any, source: Path) -> None:
 COMMAND_SPECS: dict[str, CommandSpec] = {
     "cluster": CommandSpec(handler=_handle_cluster),
     "execution": CommandSpec(handler=_handle_execution),
+    "queue": CommandSpec(handler=_handle_queue),
+    "remote": CommandSpec(handler=_handle_remote),
     "project": CommandSpec(handler=_handle_project),
     "subproject": CommandSpec(handler=_handle_subproject),
     "clusters": CommandSpec(handler=_handle_clusters, priority=True),
@@ -151,6 +169,8 @@ def load_config_files() -> None:
     Load Seamless configuration files and execute their commands.
     """
     reset_execution_before_load()
+    reset_queue_before_load()
+    reset_remote_before_load()
     load_tools()
     _load_clusters()
     commands = _build_command_invocations(_collect_command_entries())

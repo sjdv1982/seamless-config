@@ -1,6 +1,7 @@
 import warnings
 
 import pytest
+import yaml
 
 import seamless_config
 import seamless_config.select as select
@@ -20,6 +21,56 @@ def _reset_state(monkeypatch):
     monkeypatch.setattr(select, "_current_execution", "process")
     monkeypatch.setattr(select, "_execution_source", None)
     monkeypatch.setattr(select, "_execution_command_seen", False)
+    monkeypatch.setattr(select, "_current_queue", None)
+    monkeypatch.setattr(select, "_queue_source", None)
+    monkeypatch.setattr(select, "_queue_cluster", None)
+    monkeypatch.setattr(select, "_current_remote", None)
+    monkeypatch.setattr(select, "_remote_source", None)
+
+
+def _write_clusters_yaml(base_dir, queues, default_queue=None):
+    clusters_dir = base_dir / ".seamless"
+    clusters_dir.mkdir(parents=True, exist_ok=True)
+    cluster_def = {
+        "tunnel": False,
+        "frontends": [
+            {
+                "hostname": "frontend",
+                "jobserver": {
+                    "conda": "test",
+                    "network_interface": "lo",
+                    "port_start": 3000,
+                    "port_end": 3010,
+                },
+                "daskserver": {
+                    "network_interface": "lo",
+                    "port_start": 3100,
+                    "port_end": 3110,
+                },
+            }
+        ],
+        "type": "local",
+        "workers": 1,
+    }
+    if queues is not None:
+        cluster_def["queues"] = queues
+    if default_queue is None and queues:
+        default_queue = next(iter(queues))
+    cluster_def["default_queue"] = default_queue
+    (clusters_dir / "clusters.yaml").write_text(
+        yaml.safe_dump({"demo": cluster_def}), encoding="utf-8"
+    )
+
+
+def _disable_remote_launch(monkeypatch):
+    try:
+        import seamless_remote.buffer_remote
+        import seamless_remote.database_remote
+    except ImportError:
+        return
+
+    monkeypatch.setattr(seamless_remote.buffer_remote, "DISABLED", True, raising=False)
+    monkeypatch.setattr(seamless_remote.database_remote, "DISABLED", True, raising=False)
 
 
 def test_execution_defaults_to_process(monkeypatch, tmp_path):
@@ -50,4 +101,116 @@ def test_remote_execution_requires_cluster(monkeypatch, tmp_path):
 
     seamless_config.set_workdir(workdir)
     with pytest.raises(seamless_config.ConfigurationError):
+        seamless_config.init()
+
+
+def test_queue_command_selects_existing_queue(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    _disable_remote_launch(monkeypatch)
+    workdir = tmp_path / "queue-select"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {
+        "default": {
+            "conda": "base",
+            "walltime": "00:10:00",
+            "cores": 1,
+            "memory": "1GiB",
+            "unknown_task_duration": "1m",
+            "target_duration": "5m",
+            "maximum_jobs": 1,
+        },
+        "gpu": {
+            "conda": "gpu",
+            "walltime": "00:20:00",
+            "cores": 2,
+            "memory": "2GiB",
+            "unknown_task_duration": "1m",
+            "target_duration": "10m",
+            "maximum_jobs": 2,
+        },
+    }
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    (workdir / "seamless.yaml").write_text(
+        "- cluster: demo\n- queue: gpu\n- project: demo\n", encoding="utf-8"
+    )
+
+    seamless_config.set_workdir(workdir)
+    seamless_config.init()
+
+    assert select.get_queue() == "gpu"
+
+    import seamless_config.tools as tools
+
+    config = tools.configure_daskserver()
+    assert config["file_parameters"]["walltime"] == "00:20:00"
+
+
+def test_queue_command_requires_known_queue(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    _disable_remote_launch(monkeypatch)
+    workdir = tmp_path / "queue-missing"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {
+        "default": {
+            "conda": "base",
+            "walltime": "00:05:00",
+            "cores": 1,
+            "memory": "1GiB",
+            "unknown_task_duration": "1m",
+            "target_duration": "5m",
+            "maximum_jobs": 1,
+        }
+    }
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    (workdir / "seamless.yaml").write_text(
+        "- cluster: demo\n- queue: missing\n- project: demo\n", encoding="utf-8"
+    )
+
+    seamless_config.set_workdir(workdir)
+    with pytest.raises(ValueError):
+        seamless_config.init()
+
+
+def test_queue_command_requires_queue_definitions(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    _disable_remote_launch(monkeypatch)
+    workdir = tmp_path / "queue-empty"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    _write_clusters_yaml(tmp_path, {}, default_queue=None)
+    (workdir / "seamless.yaml").write_text(
+        "- cluster: demo\n- queue: default\n- project: demo\n", encoding="utf-8"
+    )
+
+    seamless_config.set_workdir(workdir)
+    with pytest.raises(ValueError):
+        seamless_config.init()
+
+
+def test_remote_command_accepts_allowed_values(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "remote-command"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (workdir / "seamless.yaml").write_text(
+        "- remote: jobserver\n- project: demo\n", encoding="utf-8"
+    )
+
+    seamless_config.set_workdir(workdir)
+    seamless_config.init()
+
+    assert select.get_remote() == "jobserver"
+
+
+def test_remote_command_rejects_invalid_value(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "remote-invalid"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (workdir / "seamless.yaml").write_text("- remote: worker\n", encoding="utf-8")
+
+    seamless_config.set_workdir(workdir)
+    with pytest.raises(ValueError):
         seamless_config.init()

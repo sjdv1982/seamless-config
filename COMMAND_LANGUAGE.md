@@ -30,11 +30,15 @@ an example (`- project: myproject`).
 | --- | --- | --- |
 | `cluster` | string | Calls `seamless_config.select_cluster(value)` |
 | `execution` | string (`process`/`spawn`/`remote`) | Calls `seamless_config.select_execution(value)` |
+| `queue` | string | Calls `seamless_config.select_queue(value)` |
+| `remote` | null or string (`daskserver`/`jobserver`) | Calls `seamless_config.select_remote(value)` |
 | `project` | string | Calls `seamless_config.select_project(value)` |
 | `subproject` | string | Calls `seamless_config.select_subproject(value)` |
 | `inherit_from_parent` | – | Also read commands from the parent directory and prepend them |
 | `clusters` | mapping | Updates the local `_clusters` dict and runs before other commands |
 | `stage <name>` | list of commands | Executes the nested list only when the current stage equals `<name>` |
+
+The `queue` command requires the current cluster to expose queues in its definition and fails with a `ValueError` when the named queue is missing. The `remote` command accepts only `null`, `daskserver` or `jobserver`.
 
 Internally, commands are split into two passes: those with priority (currently
 only `clusters`) and the rest. Between the passes the loader calls

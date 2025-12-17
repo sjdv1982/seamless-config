@@ -241,6 +241,9 @@ def configure_daskserver(
     frontend_name=None,
 ):
     dummy_mode = "rw"  # not used for this tool
+    from . import ConfigurationError
+    from .select import get_queue
+
     clus, frontend, injected = _prepare_tool(
         "daskserver",
         dummy_mode,
@@ -269,10 +272,17 @@ def configure_daskserver(
     if frontend.ssh_hostname is not None:
         added["ssh_hostname"] = frontend.ssh_hostname
     added["network_interface"] = frontend.jobserver.network_interface
-    queue_name = clus.default_queue  # TODO: make configurable
-    assert queue_name is not None
-    assert isinstance(clus.queues, dict)
-    queue = clus.queues[queue_name]
+    queue_name = get_queue(clus.name) or clus.default_queue
+    queues = clus.queues or {}
+    if queue_name is None:
+        raise ConfigurationError(
+            f"No queue selected and cluster '{clus.name}' has no default queue"
+        )
+    if queue_name not in queues:
+        raise ConfigurationError(
+            f"Cluster '{clus.name}' has no queue '{queue_name}'"
+        )
+    queue = queues[queue_name]
     added["conda"] = queue.conda
     added["port_start"] = frontend.daskserver.port_start
     added["port_end"] = frontend.daskserver.port_end

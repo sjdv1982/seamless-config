@@ -1,12 +1,5 @@
 import sys
 
-print(
-    """
-TODO: Dask client (based on default client?) that sets database and hashserver config.
-""",
-    file=sys.stderr,
-)
-
 import dataclasses
 from dataclasses import dataclass
 from typing import Literal, Optional, Any
