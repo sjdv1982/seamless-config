@@ -126,6 +126,13 @@ def set_stage(
         from .cluster import get_cluster, get_local_cluster
         from .select import get_execution
 
+        try:
+            import seamless_remote.daskserver_remote
+
+            seamless_remote.daskserver_remote.deactivate()
+        except ImportError:
+            pass
+
         cluster = get_selected_cluster()
         if cluster is not None:
             try:
@@ -136,6 +143,7 @@ def set_stage(
                 import seamless_remote.buffer_remote
                 import seamless_remote.database_remote
                 import seamless_remote.jobserver_remote
+                import seamless_remote.daskserver_remote
 
                 from .select import check_remote_redundancy
 
@@ -146,7 +154,7 @@ def set_stage(
                     if remote == "jobserver":
                         seamless_remote.jobserver_remote.activate()
                     elif remote == "daskserver":
-                        raise NotImplementedError
+                        seamless_remote.daskserver_remote.activate()
                 else:
                     seamless_remote.buffer_remote.activate()
                     seamless_remote.database_remote.activate()
