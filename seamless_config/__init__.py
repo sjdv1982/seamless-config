@@ -137,10 +137,20 @@ def set_stage(
                 import seamless_remote.database_remote
                 import seamless_remote.jobserver_remote
 
-                seamless_remote.buffer_remote.activate()
-                seamless_remote.database_remote.activate()
+                from .select import check_remote_redundancy
+
                 if get_execution() == "remote":
-                    seamless_remote.jobserver_remote.activate()
+                    remote = check_remote_redundancy(cluster)
+                    seamless_remote.buffer_remote.activate()
+                    seamless_remote.database_remote.activate()
+                    if remote == "jobserver":
+                        seamless_remote.jobserver_remote.activate()
+                    elif remote == "daskserver":
+                        raise NotImplementedError
+                else:
+                    seamless_remote.buffer_remote.activate()
+                    seamless_remote.database_remote.activate()
+
         if get_execution() == "spawn":
             from seamless.transformer import spawn
 

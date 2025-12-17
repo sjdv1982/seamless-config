@@ -156,6 +156,38 @@ def get_remote() -> Optional[str]:
     return _current_remote
 
 
+def check_remote_redundancy(cluster: str) -> Optional[str]:
+    """
+    Ensure that when remote is unset, a cluster does not expose both jobserver and daskserver on the same frontend.
+    """
+    remote = get_remote()
+    if remote is not None:
+        return remote
+    from .cluster import get_cluster
+
+    clus = get_cluster(cluster)
+    found_jobserver = False
+    found_daskserver = False
+    for frontend in clus.frontends:
+        if frontend.jobserver is not None:
+            found_jobserver = True
+        if frontend.daskserver is not None:
+            found_daskserver = True
+        if frontend.jobserver is not None and frontend.daskserver is not None:
+            raise ConfigurationError(
+                f"Cluster '{cluster}' frontend '{frontend.hostname}' has both jobserver and daskserver; in your .seamless.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
+            )
+    if found_jobserver and found_daskserver:
+        raise ConfigurationError(
+            f"Cluster '{cluster}' exposes both jobserver and daskserver; in your .seamless.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
+        )
+    if found_jobserver:
+        return "jobserver"
+    if found_daskserver:
+        return "daskserver"
+    return None
+
+
 def reset_execution_before_load() -> None:
     global _execution_source, _execution_command_seen, _current_execution
     _execution_command_seen = False
