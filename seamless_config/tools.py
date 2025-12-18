@@ -351,6 +351,10 @@ def configure_daskserver(
     params["lifetime-stagger"] = queue.lifetime_stagger
     params["lifetime"] = queue.lifetime
     params["dask-resources"] = queue.dask_resources
+    try:
+        params["interactive"] = bool(queue.interactive)
+    except Exception:
+        pass
 
     # TODO: params["transformation_throttle"] = ...
 
