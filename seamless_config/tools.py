@@ -271,7 +271,7 @@ def configure_daskserver(
     added["hostname"] = frontend.hostname
     if frontend.ssh_hostname is not None:
         added["ssh_hostname"] = frontend.ssh_hostname
-    added["network_interface"] = frontend.jobserver.network_interface
+    added["network_interface"] = frontend.daskserver.network_interface
     queue_name = get_queue(clus.name) or clus.default_queue
     queues = clus.queues or {}
     if queue_name is None:
@@ -279,9 +279,7 @@ def configure_daskserver(
             f"No queue selected and cluster '{clus.name}' has no default queue"
         )
     if queue_name not in queues:
-        raise ConfigurationError(
-            f"Cluster '{clus.name}' has no queue '{queue_name}'"
-        )
+        raise ConfigurationError(f"Cluster '{clus.name}' has no queue '{queue_name}'")
     queue = queues[queue_name]
     added["conda"] = queue.conda
     added["port_start"] = frontend.daskserver.port_start
