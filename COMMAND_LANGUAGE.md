@@ -59,8 +59,7 @@ literal stage name. For example:
 
 ```yaml
 - stage build:
-  - project: build-pipeline
-  - subproject: linux-x86
+  - execution: remote
 ```
 
 When `seamless_config.select_stage("build")` has been called, the commands
@@ -74,17 +73,18 @@ they are skipped.
 - project: my-shared-project
 - inherit_from_parent
 
-# .seamless.yaml (ignored)
+# .seamless.yaml (ignored in Git)
 - clusters:
     local:
       tunnel: false
       frontends: [...]
-    local_cluster: local
+    mycluster:
+      tunnel: true
+      frontends: [...]
 - cluster: local
 - stage prod:
-  - project: production-project
+  - cluster: mycluster
 ```
 
-The `.seamless.yaml` snippet defines local clusters, selects the `local` entry
-as both the active cluster and `local_cluster`, and only switches to the
-`production-project` when the current stage equals `prod`.
+The `.seamless.yaml` snippet defines the local and mycluster clusters, selects the `local` entry as the active cluster, and only switches to the
+`mycluster` cluster when the current stage equals `prod`.
