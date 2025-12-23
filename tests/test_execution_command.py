@@ -21,6 +21,9 @@ def _reset_state(monkeypatch):
     monkeypatch.setattr(select, "_current_execution", "process")
     monkeypatch.setattr(select, "_execution_source", None)
     monkeypatch.setattr(select, "_execution_command_seen", False)
+    monkeypatch.setattr(select, "_current_persistent", None)
+    monkeypatch.setattr(select, "_persistent_source", None)
+    monkeypatch.setattr(select, "_persistent_command_seen", False)
     monkeypatch.setattr(select, "_current_queue", None)
     monkeypatch.setattr(select, "_queue_source", None)
     monkeypatch.setattr(select, "_queue_cluster", None)
@@ -109,6 +112,54 @@ def test_execution_defaults_to_process(monkeypatch, tmp_path):
     assert any("falls back to 'process'" in msg for msg in messages)
     assert any("No cluster defined; running without persistence" in msg for msg in messages)
     assert select.get_execution() == "process"
+
+
+def test_execution_defaults_to_remote_when_cluster_selected(monkeypatch):
+    _reset_state(monkeypatch)
+    select.select_cluster("demo")
+    assert select.get_execution() == "remote"
+
+
+def test_persistent_defaults_false_without_cluster(monkeypatch):
+    _reset_state(monkeypatch)
+    assert select.get_persistent() is False
+
+
+def test_persistent_defaults_true_with_cluster(monkeypatch):
+    _reset_state(monkeypatch)
+    select.select_cluster("demo")
+    assert select.get_persistent() is True
+
+
+def test_persistent_command_overrides_default(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "persistent-command"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (workdir / "seamless.yaml").write_text(
+        "- cluster: demo\n- execution: process\n- persistent: false\n",
+        encoding="utf-8",
+    )
+    seamless_config.set_workdir(workdir)
+    seamless_config.init()
+    assert select.get_persistent() is False
+
+
+def test_configure_pure_daskserver_uses_queue_in_key(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "pure-dask-config"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {"default": _queue_defaults()}
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    seamless_config.set_workdir(workdir)
+    from seamless_config.config_files import load_config_files
+
+    load_config_files()
+    import seamless_config.tools as tools
+
+    config = tools.configure_pure_daskserver(cluster="demo")
+    assert "default" in config["key"]
 
 
 def test_remote_execution_requires_cluster(monkeypatch, tmp_path):

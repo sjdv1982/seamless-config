@@ -77,6 +77,8 @@ class ClusterQueue:
     project: str | None = None
     partition: str | None = None
     tmpdir: str = "/tmp"
+    worker_threads: int | None = None
+    processes: int | None = None
     lifetime: str | None = None
     extra_dask_config: dict | None = None
     job_extra_directives: list[str] | None = None
@@ -104,6 +106,8 @@ class ClusterQueueWithTemplate:
     maximum_jobs: int | None = None
     job_extra_directives: list[str] | None = None
     dask_resources: dict[str, str] | None = None
+    worker_threads: int | None = None
+    processes: int | None = None
 
 
 @dataclass

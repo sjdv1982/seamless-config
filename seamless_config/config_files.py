@@ -12,10 +12,12 @@ from .cluster import define_clusters as register_clusters
 from .select import (
     get_stage,
     reset_execution_before_load,
+    reset_persistent_before_load,
     reset_queue_before_load,
     reset_remote_before_load,
     select_cluster,
     select_execution,
+    select_persistent,
     select_project,
     select_queue,
     select_remote,
@@ -109,6 +111,12 @@ def _handle_remote(value: Any, source: Path) -> None:
     select_remote(value, source="command")
 
 
+def _handle_persistent(value: Any, source: Path) -> None:
+    if not isinstance(value, bool):
+        raise ValueError(f"{source}: 'persistent' command expects a boolean value")
+    select_persistent(value, source="command")
+
+
 def _handle_project(value: Any, source: Path) -> None:
     if not isinstance(value, str):
         raise ValueError(f"{source}: 'project' command expects a string value")
@@ -132,6 +140,7 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
     "execution": CommandSpec(handler=_handle_execution),
     "queue": CommandSpec(handler=_handle_queue),
     "remote": CommandSpec(handler=_handle_remote),
+    "persistent": CommandSpec(handler=_handle_persistent),
     "project": CommandSpec(handler=_handle_project),
     "subproject": CommandSpec(handler=_handle_subproject),
     "clusters": CommandSpec(handler=_handle_clusters, priority=True),
@@ -169,6 +178,7 @@ def load_config_files() -> None:
     Load Seamless configuration files and execute their commands.
     """
     reset_execution_before_load()
+    reset_persistent_before_load()
     reset_queue_before_load()
     reset_remote_before_load()
     load_tools()

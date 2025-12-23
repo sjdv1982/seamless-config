@@ -1,5 +1,6 @@
 import inspect
 import os
+import sys
 import warnings
 from typing import Optional
 
@@ -75,10 +76,16 @@ def _report_execution_requirements():
     execution = get_execution()
     cluster = get_selected_cluster()
     if not execution_command_seen() and not execution_was_set_explicitly():
-        warnings.warn(
-            "No 'execution' command found; Seamless falls back to 'process'",
-            stacklevel=3,
-        )
+        if cluster is not None:
+            warnings.warn(
+                "No 'execution' command found; Seamless defaults to 'remote' because a cluster is defined",
+                stacklevel=3,
+            )
+        else:
+            warnings.warn(
+                "No 'execution' command found; Seamless falls back to 'process'",
+                stacklevel=3,
+            )
     if execution == "remote" and cluster is None:
         raise ConfigurationError("Execution is 'remote' but no cluster was defined")
     if execution != "remote" and cluster is None:
@@ -86,6 +93,19 @@ def _report_execution_requirements():
             "No cluster defined; running without persistence (define a cluster when using 'execution: remote')",
             stacklevel=3,
         )
+
+
+def _is_seamless_worker() -> bool:
+    module = sys.modules.get("seamless")
+    if module is None:
+        return False
+    is_worker = getattr(module, "is_worker", None)
+    if callable(is_worker):
+        try:
+            return bool(is_worker())
+        except Exception:
+            return False
+    return False
 
 
 def set_stage(
@@ -124,40 +144,69 @@ def set_stage(
     if stage_change:
         from .select import get_selected_cluster
         from .cluster import get_cluster, get_local_cluster
-        from .select import get_execution
+        from .select import get_execution, get_persistent
 
+        persistent = get_persistent()
         try:
-            import seamless_remote.daskserver_remote
+            from .pure_daskserver import deactivate as pure_deactivate
+        except Exception:
+            pure_deactivate = None
+        if pure_deactivate is not None:
+            pure_deactivate()
 
-            seamless_remote.daskserver_remote.deactivate()
-        except ImportError:
-            pass
+        if persistent:
+            try:
+                import seamless_remote.daskserver_remote
+
+                seamless_remote.daskserver_remote.deactivate()
+            except ImportError:
+                pass
+        else:
+            module = sys.modules.get("seamless_remote.daskserver_remote")
+            if module is not None:
+                try:
+                    module.deactivate()
+                except Exception:
+                    pass
 
         cluster = get_selected_cluster()
         if cluster is not None:
-            try:
-                import seamless_remote
-            except ImportError:  # seamless_remote was not installed
-                pass
-            else:
-                import seamless_remote.buffer_remote
-                import seamless_remote.database_remote
-                import seamless_remote.jobserver_remote
-                import seamless_remote.daskserver_remote
-
+            execution = get_execution()
+            if not persistent and execution == "remote":
                 from .select import check_remote_redundancy
 
-                if get_execution() == "remote":
-                    remote = check_remote_redundancy(cluster)
-                    seamless_remote.buffer_remote.activate()
-                    seamless_remote.database_remote.activate()
-                    if remote == "jobserver":
-                        seamless_remote.jobserver_remote.activate()
-                    elif remote == "daskserver":
-                        seamless_remote.daskserver_remote.activate()
+                remote = check_remote_redundancy(cluster)
+                if remote != "daskserver":
+                    raise ConfigurationError(
+                        "Pure Dask mode requires a daskserver remote target"
+                    )
+                from .pure_daskserver import activate as pure_activate
+
+                pure_activate()
+            elif persistent:
+                try:
+                    import seamless_remote
+                except ImportError:  # seamless_remote was not installed
+                    pass
                 else:
-                    seamless_remote.buffer_remote.activate()
-                    seamless_remote.database_remote.activate()
+                    import seamless_remote.buffer_remote
+                    import seamless_remote.database_remote
+                    import seamless_remote.jobserver_remote
+                    import seamless_remote.daskserver_remote
+
+                    from .select import check_remote_redundancy
+
+                    if execution == "remote":
+                        remote = check_remote_redundancy(cluster)
+                        seamless_remote.buffer_remote.activate()
+                        seamless_remote.database_remote.activate()
+                        if remote == "jobserver":
+                            seamless_remote.jobserver_remote.activate()
+                        elif remote == "daskserver":
+                            seamless_remote.daskserver_remote.activate()
+                    else:
+                        seamless_remote.buffer_remote.activate()
+                        seamless_remote.database_remote.activate()
 
         if get_execution() == "spawn":
             from seamless.transformer import spawn
@@ -188,9 +237,7 @@ def init(*, workdir=_UNSET):
     Sets the workdir if not set previously.
     If no argument is provided, infer it from the caller.
     """
-    import seamless
-
-    if seamless.is_worker():
+    if _is_seamless_worker():
         return
     if _initialized:
         return

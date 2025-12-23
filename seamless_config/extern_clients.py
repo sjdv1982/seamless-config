@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from seamless_remote import buffer_remote, database_remote
-
 from .tools import configure_hashserver
 
 
@@ -14,6 +12,8 @@ def collect_remote_clients(cluster: str) -> Dict[str, List[Dict[str, Any]]]:
     Returns two lists with entries that can be passed to define_extern_client,
     under the keys "database" and "buffer".
     """
+    from seamless_remote import buffer_remote, database_remote
+
     database_entries: list[dict[str, Any]] = []
     buffer_entries: list[dict[str, Any]] = []
 

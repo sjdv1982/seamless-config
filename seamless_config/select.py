@@ -8,11 +8,14 @@ _current_substage: Optional[str] = None
 _current_execution: str = "process"
 _current_queue: Optional[str] = None
 _current_remote: Optional[str] = None
+_current_persistent: Optional[bool] = None
 _execution_source: Optional[str] = None  # "command" or "manual"
 _queue_source: Optional[str] = None  # "command" or "manual"
 _queue_cluster: Optional[str] = None
 _remote_source: Optional[str] = None  # "command" or "manual"
+_persistent_source: Optional[str] = None  # "command" or "manual"
 _execution_command_seen: bool = False
+_persistent_command_seen: bool = False
 
 EXECUTION_MODES = ("process", "spawn", "remote")
 REMOTE_TARGETS = (None, "daskserver", "jobserver")
@@ -81,6 +84,16 @@ def select_execution(execution: str, *, source: str = "manual") -> None:
         _execution_command_seen = True
 
 
+def select_persistent(persistent: bool, *, source: str = "manual") -> None:
+    global _current_persistent, _persistent_source, _persistent_command_seen
+    if not isinstance(persistent, bool):
+        raise ValueError("persistent must be a boolean")
+    _current_persistent = persistent
+    _persistent_source = source
+    if source == "command":
+        _persistent_command_seen = True
+
+
 def select_queue(queue: str, *, source: str = "manual") -> None:
     global _current_queue, _queue_source, _queue_cluster
     if not isinstance(queue, str):
@@ -120,6 +133,8 @@ def get_stage():
 
 
 def get_execution() -> str:
+    if _execution_source is None and _current_cluster is not None:
+        return "remote"
     return _current_execution
 
 
@@ -129,6 +144,18 @@ def execution_was_set_explicitly() -> bool:
 
 def execution_command_seen() -> bool:
     return _execution_command_seen
+
+
+def persistent_was_set_explicitly() -> bool:
+    return _persistent_source is not None
+
+
+def get_persistent(cluster: Optional[str] = None) -> bool:
+    if _current_persistent is not None:
+        return _current_persistent
+    if cluster is None:
+        cluster = _current_cluster
+    return bool(cluster)
 
 
 def get_queue(cluster: Optional[str] = None) -> Optional[str]:
@@ -209,6 +236,14 @@ def reset_remote_before_load() -> None:
     if _remote_source == "command":
         _current_remote = None
         _remote_source = None
+
+
+def reset_persistent_before_load() -> None:
+    global _current_persistent, _persistent_source, _persistent_command_seen
+    _persistent_command_seen = False
+    if _persistent_source == "command":
+        _persistent_source = None
+        _current_persistent = None
 
 
 def get_selected_cluster() -> Optional[str]:

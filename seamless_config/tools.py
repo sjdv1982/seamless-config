@@ -321,6 +321,8 @@ def configure_daskserver(
     params["project"] = queue.project
     params["memory_per_core_property_name"] = clus.memory_per_core_property_name
     params["job_script_prologue"] = queue.job_script_prologue
+    params["worker_threads"] = queue.worker_threads
+    params["processes"] = queue.processes
 
     """
     #### C
@@ -364,3 +366,94 @@ def configure_daskserver(
     added["file_parameters"] = params
 
     return _configure_tool("daskserver", added=added, injected=injected)
+
+
+def configure_pure_daskserver(
+    *,
+    cluster=None,
+    queue: str | None = None,
+    frontend_name=None,
+):
+    from . import ConfigurationError
+    from .select import get_queue, get_selected_cluster
+
+    if cluster is None:
+        cluster = get_selected_cluster()
+    if cluster is None:
+        raise ConfigurationError("No cluster defined")
+    clus = get_cluster(cluster)
+    for frontend in clus.frontends:
+        if frontend_name is not None and frontend.hostname != frontend_name:
+            continue
+        if frontend.daskserver is not None:
+            break
+    else:
+        if frontend_name is not None:
+            raise ConfigurationError(
+                f"No frontend of cluster '{cluster}' with name '{frontend_name}' can support a daskserver"
+            )
+        raise ConfigurationError(f"No frontend of cluster '{cluster}' can support a daskserver")
+
+    injected = {"CLUSTER": cluster}
+
+    added = {}
+    assert clus.type is not None
+    if clus.type == "local":
+        cluster_string = "distributed::LocalCluster"
+    elif clus.type == "slurm":
+        cluster_string = "dask_jobqueue::SLURMCluster"
+    elif clus.type == "oar":
+        cluster_string = "dask_jobqueue::OARCluster"
+    else:
+        raise ValueError(clus.type)
+    added["cluster_string"] = cluster_string
+    added["tunnel"] = clus.tunnel
+    added["hostname"] = frontend.hostname
+    if frontend.ssh_hostname is not None:
+        added["ssh_hostname"] = frontend.ssh_hostname
+    added["network_interface"] = frontend.daskserver.network_interface
+    queue_name = queue or get_queue(cluster) or clus.default_queue
+    queues = clus.queues or {}
+    if queue_name is None:
+        raise ConfigurationError(
+            f"No queue selected and cluster '{clus.name}' has no default queue"
+        )
+    if queue_name not in queues:
+        raise ConfigurationError(f"Cluster '{clus.name}' has no queue '{queue_name}'")
+    queue_def = queues[queue_name]
+    injected["QUEUE"] = queue_name
+    added["conda"] = queue_def.conda
+    added["port_start"] = frontend.daskserver.port_start
+    added["port_end"] = frontend.daskserver.port_end
+
+    params = {}
+
+    params["walltime"] = queue_def.walltime
+    params["cores"] = queue_def.cores
+    if queue_def.cores is None and clus.type == "local":
+        params["cores"] = clus.workers
+    params["memory"] = queue_def.memory
+    params["tmpdir"] = queue_def.tmpdir
+    params["partition"] = queue_def.partition
+    params["job_extra_directives"] = queue_def.job_extra_directives
+    params["project"] = queue_def.project
+    params["memory_per_core_property_name"] = clus.memory_per_core_property_name
+    params["job_script_prologue"] = queue_def.job_script_prologue
+    params["worker_threads"] = queue_def.worker_threads
+    params["processes"] = queue_def.processes
+
+    params["unknown-task-duration"] = queue_def.unknown_task_duration
+    params["target-duration"] = queue_def.target_duration
+    params["lifetime-stagger"] = queue_def.lifetime_stagger
+    params["lifetime"] = queue_def.lifetime
+    params["dask-resources"] = queue_def.dask_resources
+    try:
+        params["interactive"] = bool(queue_def.interactive)
+    except Exception:
+        pass
+    params["extra_dask_config"] = queue_def.extra_dask_config
+
+    params = {k: v for k, v in params.items() if v is not None}
+    added["file_parameters"] = params
+
+    return _configure_tool("pure_daskserver", added=added, injected=injected)

@@ -32,24 +32,25 @@ an example (`- project: myproject`).
 | `execution` | string (`process`/`spawn`/`remote`) | Calls `seamless_config.select_execution(value)` |
 | `queue` | string | Calls `seamless_config.select_queue(value)` |
 | `remote` | null or string (`daskserver`/`jobserver`) | Calls `seamless_config.select_remote(value)` |
+| `persistent` | boolean | Calls `seamless_config.select_persistent(value)` |
 | `project` | string | Calls `seamless_config.select_project(value)` |
 | `subproject` | string | Calls `seamless_config.select_subproject(value)` |
 | `inherit_from_parent` | – | Also read commands from the parent directory and prepend them |
 | `clusters` | mapping | Updates the local `_clusters` dict and runs before other commands |
 | `stage <name>` | list of commands | Executes the nested list only when the current stage equals `<name>` |
 
-The `queue` command requires the current cluster to expose queues in its definition and fails with a `ValueError` when the named queue is missing. The `remote` command accepts only `null`, `daskserver` or `jobserver`.
+The `queue` command requires the current cluster to expose queues in its definition and fails with a `ValueError` when the named queue is missing. The `remote` command accepts only `null`, `daskserver` or `jobserver`. The `persistent` command forces persistent storage on or off; when omitted it defaults to `true` if a cluster is selected and `false` otherwise.
 
 Internally, commands are split into two passes: those with priority (currently
 only `clusters`) and the rest. Between the passes the loader calls
 `seamless_config.cluster.define_clusters(_clusters)` so the later commands use
 the freshest cluster data.
 
-If no `execution` command is encountered, `init()` prints that it falls back to
-`process`. Clusters only need to be defined when `execution` is set to
-`remote`; for other modes, an undefined cluster triggers a warning that also
-notes that persistence is unavailable, while `execution: remote` without a
-cluster raises an error.
+If no `execution` command is encountered, `init()` defaults to `remote` when a
+cluster is selected and otherwise falls back to `process`. Clusters only need to
+be defined when `execution` is set to `remote`; for other modes, an undefined
+cluster triggers a warning that also notes that persistence is unavailable,
+while `execution: remote` without a cluster raises an error.
 
 ### Stage blocks
 
