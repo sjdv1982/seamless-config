@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from . import ConfigurationError
@@ -11,8 +10,6 @@ DISABLED = False  # to disable automatic activation during tests
 
 _launcher_cache: dict[Any, dict] = {}
 _launched_handle: "PureDaskserverLaunchedHandle | None" = None
-
-_PURE_DASK_ENV = "SEAMLESS_PURE_DASK"
 
 
 def _freeze_value(value: Any) -> Any:
@@ -76,13 +73,6 @@ class PureDaskserverLaunchedHandle:
         )
 
 
-def _set_pure_dask_enabled(enabled: bool) -> None:
-    if enabled:
-        os.environ[_PURE_DASK_ENV] = "1"
-    else:
-        os.environ.pop(_PURE_DASK_ENV, None)
-
-
 def activate(*, no_main: bool = False, queue: str | None = None) -> None:
     """Launch the remote daskserver and configure a distributed.Client."""
 
@@ -96,7 +86,6 @@ def activate(*, no_main: bool = False, queue: str | None = None) -> None:
         raise ConfigurationError("No cluster defined")
 
     _launched_handle = PureDaskserverLaunchedHandle(cluster, queue, None)
-    _set_pure_dask_enabled(True)
     if _launched_handle.dashboard_url:
         print(f"Dask dashboard: {_launched_handle.dashboard_url}")
 
@@ -105,7 +94,6 @@ def deactivate() -> None:
     """Clear the current Dask client and launched handle."""
 
     global _launched_handle
-    _set_pure_dask_enabled(False)
     if _launched_handle is None:
         return
     try:
