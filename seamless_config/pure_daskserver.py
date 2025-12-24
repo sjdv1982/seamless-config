@@ -69,7 +69,7 @@ class PureDaskserverLaunchedHandle:
         from distributed import Client as DistributedClient
 
         self.client = DistributedClient(
-            scheduler_address, timeout="10s", set_as_default=False
+            scheduler_address, timeout="10s", set_as_default=True
         )
 
 

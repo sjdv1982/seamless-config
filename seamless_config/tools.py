@@ -390,7 +390,9 @@ def configure_pure_daskserver(
             raise ConfigurationError(
                 f"No frontend of cluster '{cluster}' with name '{frontend_name}' can support a daskserver"
             )
-        raise ConfigurationError(f"No frontend of cluster '{cluster}' can support a daskserver")
+        raise ConfigurationError(
+            f"No frontend of cluster '{cluster}' can support a daskserver"
+        )
 
     injected = {"CLUSTER": cluster}
 
@@ -437,7 +439,10 @@ def configure_pure_daskserver(
     params["project"] = queue_def.project
     params["memory_per_core_property_name"] = clus.memory_per_core_property_name
     params["job_script_prologue"] = queue_def.job_script_prologue
-    params["worker_threads"] = queue_def.worker_threads
+    worker_threads = queue_def.worker_threads
+    if worker_threads is None:
+        worker_threads = 2
+    params["worker_threads"] = worker_threads
     params["processes"] = queue_def.processes
 
     params["unknown-task-duration"] = queue_def.unknown_task_duration
@@ -449,6 +454,7 @@ def configure_pure_daskserver(
         params["interactive"] = bool(queue_def.interactive)
     except Exception:
         pass
+    params["maximum_jobs"] = queue_def.maximum_jobs
     params["pure_dask"] = True
     params["extra_dask_config"] = queue_def.extra_dask_config
 
