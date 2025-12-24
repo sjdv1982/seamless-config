@@ -451,6 +451,7 @@ def configure_pure_daskserver(
         params["interactive"] = bool(queue_def.interactive)
     except Exception:
         pass
+    params["pure_dask"] = True
     params["extra_dask_config"] = queue_def.extra_dask_config
 
     params = {k: v for k, v in params.items() if v is not None}
