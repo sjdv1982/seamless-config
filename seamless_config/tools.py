@@ -355,6 +355,7 @@ def configure_daskserver(
         params["interactive"] = bool(queue.interactive)
     except Exception:
         pass
+    params["maximum_jobs"] = queue.maximum_jobs
 
     # TODO: params["transformation_throttle"] = ...
 
