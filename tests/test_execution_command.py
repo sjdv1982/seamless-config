@@ -78,11 +78,27 @@ def _disable_remote_launch(monkeypatch):
     try:
         import seamless_remote.buffer_remote
         import seamless_remote.database_remote
+        import seamless_remote.daskserver_remote
+        import seamless_remote.jobserver_remote
     except ImportError:
         return
 
     monkeypatch.setattr(seamless_remote.buffer_remote, "DISABLED", True, raising=False)
     monkeypatch.setattr(seamless_remote.database_remote, "DISABLED", True, raising=False)
+    monkeypatch.setattr(
+        seamless_remote.daskserver_remote, "DISABLED", True, raising=False
+    )
+    monkeypatch.setattr(
+        seamless_remote.jobserver_remote, "DISABLED", True, raising=False
+    )
+
+    try:
+        import seamless_config.pure_daskserver
+    except Exception:
+        return
+    monkeypatch.setattr(
+        seamless_config.pure_daskserver, "DISABLED", True, raising=False
+    )
 
 
 def _queue_defaults():
