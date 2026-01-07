@@ -456,6 +456,8 @@ def configure_pure_daskserver(
     except Exception:
         pass
     params["maximum_jobs"] = queue_def.maximum_jobs
+    if params["maximum_jobs"] is None and clus.type == "local":
+        params["maximum_jobs"] = clus.workers
     params["pure_dask"] = True
     params["extra_dask_config"] = queue_def.extra_dask_config
 
