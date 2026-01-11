@@ -18,12 +18,16 @@ def collect_remote_clients(cluster: str) -> Dict[str, List[Dict[str, Any]]]:
     buffer_entries: list[dict[str, Any]] = []
 
     for info in database_remote.inspect_extern_clients():
-        database_entries.append({"readonly": info["readonly"], "url": info.get("url")})
+        database_entries.append(
+            {"readonly": info["readonly"], "url": info.get("remote_url")}
+        )
 
     for info in database_remote.inspect_launched_clients():
         if info.get("cluster") != cluster:
             continue
-        database_entries.append({"readonly": info["readonly"], "url": info.get("url")})
+        database_entries.append(
+            {"readonly": info["readonly"], "url": info.get("remote_url")}
+        )
 
     for info in buffer_remote.inspect_extern_clients():
         entry: dict[str, Any] = {"readonly": info["readonly"]}
@@ -40,8 +44,8 @@ def collect_remote_clients(cluster: str) -> Dict[str, List[Dict[str, Any]]]:
         entry: dict[str, Any] = {"readonly": readonly}
         if info.get("directory") is not None:
             entry["directory"] = info["directory"]
-        if info.get("url") is not None:
-            entry["url"] = info["url"]
+        if info.get("remote_url") is not None:
+            entry["url"] = info["remote_url"]
 
         # For readonly clients we replace the URL entry with a directory entry.
         if not readonly:
