@@ -84,6 +84,7 @@ class ClusterQueue:
     job_extra_directives: list[str] | None = None
     job_script_prologue: list[str] | None = None
     dask_resources: dict[str, str] | None = None
+    job_cores: int | None = None
 
 
 @dataclass
@@ -108,6 +109,7 @@ class ClusterQueueWithTemplate:
     dask_resources: dict[str, str] | None = None
     worker_threads: int | None = None
     processes: int | None = None
+    job_cores: int | None = None
 
 
 @dataclass
