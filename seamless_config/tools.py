@@ -432,6 +432,7 @@ def configure_pure_daskserver(
 
     params["walltime"] = queue_def.walltime
     params["cores"] = queue_def.cores
+    params["job_cores"] = queue_def.job_cores
     if queue_def.cores is None and clus.type == "local":
         params["cores"] = clus.workers
     params["memory"] = queue_def.memory
