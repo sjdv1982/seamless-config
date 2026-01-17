@@ -136,9 +136,12 @@ def set_stage(
     select_substage(
         substage
     )  # TODO: re-evaluate job delegation after substage change? or do it dynamically, when the first job is submitted?
-    if workdir is _UNSET and not _set_workdir_called:
-        _set_workdir(_UNSET, 2)
-    result = load_config_files()
+    if workdir is _UNSET:
+        if not _set_workdir_called:
+            _set_workdir(_UNSET, 2)
+    else:
+        _set_workdir(workdir, None)
+    load_config_files()
     _report_execution_requirements()
     _initialized = True
     if stage_change:
@@ -214,8 +217,6 @@ def set_stage(
             local_cluster = get_cluster(get_local_cluster())
             spawn(local_cluster.workers)
 
-    return result
-
 
 def set_substage(substage: Optional[str] = None):
     """
@@ -241,9 +242,7 @@ def init(*, workdir=_UNSET):
         return
     if _initialized:
         return
-    if workdir is _UNSET and not _set_workdir_called:
-        _set_workdir(_UNSET, 2)
-    return set_stage()
+    return set_stage(workdir=workdir)
 
 
 from .extern_clients import collect_remote_clients, set_remote_clients
