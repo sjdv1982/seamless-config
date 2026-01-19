@@ -79,19 +79,19 @@ def _report_execution_requirements():
         if cluster is not None:
             warnings.warn(
                 "No 'execution' command found; Seamless defaults to 'remote' because a cluster is defined",
-                stacklevel=3,
+                stacklevel=0,
             )
         else:
             warnings.warn(
                 "No 'execution' command found; Seamless falls back to 'process'",
-                stacklevel=3,
+                stacklevel=0,
             )
     if execution == "remote" and cluster is None:
         raise ConfigurationError("Execution is 'remote' but no cluster was defined")
     if execution != "remote" and cluster is None:
         warnings.warn(
             "No cluster defined; running without persistence (define a cluster when using 'execution: remote')",
-            stacklevel=3,
+            stacklevel=0,
         )
 
 
