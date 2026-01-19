@@ -62,7 +62,7 @@ def set_workdir(workdir=_UNSET):
     """
     Optionally set the workdir. If no argument is provided, infer it from the caller.
     """
-    return _set_workdir(workdir, 1)
+    return _set_workdir(workdir, 2)
 
 
 def _report_execution_requirements():
@@ -136,11 +136,8 @@ def set_stage(
     select_substage(
         substage
     )  # TODO: re-evaluate job delegation after substage change? or do it dynamically, when the first job is submitted?
-    if workdir is _UNSET:
-        if not _set_workdir_called:
-            _set_workdir(_UNSET, 2)
-    else:
-        _set_workdir(workdir, None)
+    if workdir is _UNSET and not _set_workdir_called:
+        _set_workdir(_UNSET, 2)
     load_config_files()
     _report_execution_requirements()
     _initialized = True
@@ -225,8 +222,6 @@ def set_substage(substage: Optional[str] = None):
     from .select import get_stage
 
     stage = get_stage()
-    if not _set_workdir_called:
-        _set_workdir(_UNSET, 2)
     return set_stage(stage, substage)
 
 
@@ -242,6 +237,8 @@ def init(*, workdir=_UNSET):
         return
     if _initialized:
         return
+    if workdir is _UNSET and not _set_workdir_called:
+        _set_workdir(_UNSET, 2)
     return set_stage(workdir=workdir)
 
 
