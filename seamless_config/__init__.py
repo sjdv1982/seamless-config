@@ -108,6 +108,84 @@ def _is_seamless_worker() -> bool:
     return False
 
 
+def change_stage():
+    from .select import get_selected_cluster
+    from .cluster import get_cluster, get_local_cluster
+    from .select import get_execution, get_persistent
+
+    global _initialized
+
+    persistent = get_persistent()
+    try:
+        from .pure_daskserver import deactivate as pure_deactivate
+    except Exception:
+        pure_deactivate = None
+    if pure_deactivate is not None:
+        pure_deactivate()
+
+    if persistent:
+        try:
+            import seamless_remote.daskserver_remote
+
+            seamless_remote.daskserver_remote.deactivate()
+        except ImportError:
+            pass
+    else:
+        module = sys.modules.get("seamless_remote.daskserver_remote")
+        if module is not None:
+            try:
+                module.deactivate()
+            except Exception:
+                pass
+
+    cluster = get_selected_cluster()
+    if cluster is not None:
+        execution = get_execution()
+        if not persistent and execution == "remote":
+            from .select import check_remote_redundancy
+
+            remote = check_remote_redundancy(cluster)
+            if remote != "daskserver":
+                raise ConfigurationError(
+                    "Pure Dask mode requires a daskserver remote target"
+                )
+            from .pure_daskserver import activate as pure_activate
+
+            pure_activate()
+        elif persistent:
+            try:
+                import seamless_remote
+            except ImportError:  # seamless_remote was not installed
+                pass
+            else:
+                import seamless_remote.buffer_remote
+                import seamless_remote.database_remote
+                import seamless_remote.jobserver_remote
+                import seamless_remote.daskserver_remote
+
+                from .select import check_remote_redundancy
+
+                if execution == "remote":
+                    remote = check_remote_redundancy(cluster)
+                    seamless_remote.buffer_remote.activate()
+                    seamless_remote.database_remote.activate()
+                    if remote == "jobserver":
+                        seamless_remote.jobserver_remote.activate()
+                    elif remote == "daskserver":
+                        seamless_remote.daskserver_remote.activate()
+                else:
+                    seamless_remote.buffer_remote.activate()
+                    seamless_remote.database_remote.activate()
+
+    if get_execution() == "spawn":
+        from seamless.transformer import spawn
+
+        local_cluster = get_cluster(get_local_cluster())
+        spawn(local_cluster.workers)
+
+    _initialized = True
+
+
 def set_stage(
     stage: Optional[str] = None, substage: Optional[str] = None, *, workdir=_UNSET
 ):
@@ -118,15 +196,16 @@ def set_stage(
     If no argument is provided, infer it from the caller.
     """
     from .config_files import load_config_files
+
+    if _remote_clients_set:
+        raise RuntimeError("remote clients already set; stage cannot be changed")
+
     from .select import (
         select_stage,
         get_stage,
         select_substage,
     )
 
-    if _remote_clients_set:
-        raise RuntimeError("remote clients already set; stage cannot be changed")
-    global _initialized
     old_stage = get_stage()
     old_initialized = _initialized
 
@@ -136,83 +215,13 @@ def set_stage(
     select_substage(
         substage
     )  # TODO: re-evaluate job delegation after substage change? or do it dynamically, when the first job is submitted?
+
     if workdir is _UNSET and not _set_workdir_called:
         _set_workdir(_UNSET, 2)
     load_config_files()
     _report_execution_requirements()
-    _initialized = True
     if stage_change:
-        from .select import get_selected_cluster
-        from .cluster import get_cluster, get_local_cluster
-        from .select import get_execution, get_persistent
-
-        persistent = get_persistent()
-        try:
-            from .pure_daskserver import deactivate as pure_deactivate
-        except Exception:
-            pure_deactivate = None
-        if pure_deactivate is not None:
-            pure_deactivate()
-
-        if persistent:
-            try:
-                import seamless_remote.daskserver_remote
-
-                seamless_remote.daskserver_remote.deactivate()
-            except ImportError:
-                pass
-        else:
-            module = sys.modules.get("seamless_remote.daskserver_remote")
-            if module is not None:
-                try:
-                    module.deactivate()
-                except Exception:
-                    pass
-
-        cluster = get_selected_cluster()
-        if cluster is not None:
-            execution = get_execution()
-            if not persistent and execution == "remote":
-                from .select import check_remote_redundancy
-
-                remote = check_remote_redundancy(cluster)
-                if remote != "daskserver":
-                    raise ConfigurationError(
-                        "Pure Dask mode requires a daskserver remote target"
-                    )
-                from .pure_daskserver import activate as pure_activate
-
-                pure_activate()
-            elif persistent:
-                try:
-                    import seamless_remote
-                except ImportError:  # seamless_remote was not installed
-                    pass
-                else:
-                    import seamless_remote.buffer_remote
-                    import seamless_remote.database_remote
-                    import seamless_remote.jobserver_remote
-                    import seamless_remote.daskserver_remote
-
-                    from .select import check_remote_redundancy
-
-                    if execution == "remote":
-                        remote = check_remote_redundancy(cluster)
-                        seamless_remote.buffer_remote.activate()
-                        seamless_remote.database_remote.activate()
-                        if remote == "jobserver":
-                            seamless_remote.jobserver_remote.activate()
-                        elif remote == "daskserver":
-                            seamless_remote.daskserver_remote.activate()
-                    else:
-                        seamless_remote.buffer_remote.activate()
-                        seamless_remote.database_remote.activate()
-
-        if get_execution() == "spawn":
-            from seamless.transformer import spawn
-
-            local_cluster = get_cluster(get_local_cluster())
-            spawn(local_cluster.workers)
+        change_stage()
 
 
 def set_substage(substage: Optional[str] = None):

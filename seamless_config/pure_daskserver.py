@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 from . import ConfigurationError
@@ -49,7 +50,7 @@ class PureDaskserverLaunchedHandle:
         frozenconf = _freeze_value(conf)
         payload = _launcher_cache.get(frozenconf)
         if payload is None:
-            print("Launch daskserver...")
+            print("Launch daskserver...", file=sys.stderr)
             payload = remote_http_launcher.run(conf)
             _launcher_cache[frozenconf] = payload
 
