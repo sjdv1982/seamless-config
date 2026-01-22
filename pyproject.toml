@@ -8,3 +8,6 @@ seamless_config = ["tools.yaml"]
 [project]
 name = "seamless-config"
 version = "0.0.0"
+
+[tool.setuptools]
+script-files = ["bin/seamless-init"]

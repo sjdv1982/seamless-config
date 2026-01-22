@@ -1,0 +1,10 @@
+#!/usr/bin/env -S python3 -u
+import os
+import seamless
+import seamless.config
+
+if __name__ == "__main__":
+    try:
+        seamless.config.init(workdir=os.getcwd())
+    finally:
+        seamless.close()
