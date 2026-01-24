@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from typing import Any, Dict, List
 
@@ -109,3 +110,57 @@ def set_remote_clients(
         buffer_names.append(name)
 
     buffer_remote.activate(no_main=True, extern_clients=buffer_names)
+
+
+def set_remote_clients_from_env(include_dask: bool) -> bool:
+    env_remote_clients = os.environ.get("SEAMLESS_REMOTE_CLIENTS")
+    if env_remote_clients is None:
+        return False
+    try:
+        remote_clients = json.loads(env_remote_clients)
+        set_remote_clients(remote_clients, in_remote=True)
+        if include_dask:
+            _configure_dask_client_from_env()
+    except Exception:
+        pass
+    return True
+
+
+def _configure_dask_client_from_env() -> None:
+    try:
+        from seamless import is_worker
+
+        if is_worker():
+            return
+    except Exception:
+        return
+    scheduler_address = os.environ.get("SEAMLESS_DASK_SCHEDULER")
+    if not scheduler_address:
+        return
+    try:
+        from seamless_dask.transformer_client import (
+            get_seamless_dask_client,
+            set_seamless_dask_client,
+        )
+    except Exception:
+        return
+    if get_seamless_dask_client() is not None:
+        return
+    try:
+        from distributed import Client as DistributedClient
+        from seamless_dask.client import SeamlessDaskClient
+
+        try:
+            worker_count = int(os.environ.get("SEAMLESS_DASK_WORKERS", "1") or 1)
+        except Exception:
+            worker_count = 1
+        dask_client = DistributedClient(
+            scheduler_address, timeout="10s", set_as_default=False
+        )
+        sd_client = SeamlessDaskClient(
+            dask_client,
+            worker_plugin_workers=worker_count,
+        )
+        set_seamless_dask_client(sd_client)
+    except Exception:
+        pass
