@@ -157,8 +157,26 @@ def test_persistent_command_overrides_default(monkeypatch, tmp_path):
         encoding="utf-8",
     )
     seamless_config.set_workdir(workdir)
-    seamless_config.init()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        seamless_config.init()
     assert select.get_persistent() is False
+    messages = [str(w.message) for w in caught]
+    assert not any("No cluster defined; running without persistence" in msg for msg in messages)
+
+
+def test_explicit_persistent_true_without_cluster_errors(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "persistent-without-cluster"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (workdir / "seamless.yaml").write_text(
+        "- execution: process\n- persistent: true\n",
+        encoding="utf-8",
+    )
+    seamless_config.set_workdir(workdir)
+    with pytest.raises(seamless_config.ConfigurationError):
+        seamless_config.init()
 
 
 def test_configure_pure_daskserver_uses_queue_in_key(monkeypatch, tmp_path):

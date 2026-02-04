@@ -70,10 +70,13 @@ def _report_execution_requirements():
         execution_command_seen,
         execution_was_set_explicitly,
         get_execution,
+        get_persistent,
+        persistent_was_set_explicitly,
         get_selected_cluster,
     )
 
     execution = get_execution()
+    persistent = get_persistent()
     cluster = get_selected_cluster()
     if not execution_command_seen() and not execution_was_set_explicitly():
         if cluster is not None:
@@ -89,6 +92,12 @@ def _report_execution_requirements():
     if execution == "remote" and cluster is None:
         raise ConfigurationError("Execution is 'remote' but no cluster was defined")
     if execution != "remote" and cluster is None:
+        if persistent and persistent_was_set_explicitly():
+            raise ConfigurationError(
+                "Persistence was explicitly enabled but no cluster was defined"
+            )
+        if not persistent and persistent_was_set_explicitly():
+            return
         warnings.warn(
             "No cluster defined; running without persistence (define a cluster when using 'execution: remote')",
             stacklevel=0,
