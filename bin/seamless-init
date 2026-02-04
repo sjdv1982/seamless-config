@@ -1,4 +1,5 @@
 #!/usr/bin/env -S python3 -u
+import argparse
 import os
 import seamless
 import seamless.config
@@ -12,7 +13,25 @@ if __name__ == "__main__":
         exit(0)
 
     try:
-        seamless.config.init(workdir=os.getcwd())
+        parser = argparse.ArgumentParser(prog="seamless-init")
+        parser.add_argument(
+            "--stage",
+            metavar="STAGE[:SUBSTAGE]",
+            help="set Seamless project stage (and substage). Each project stage has independent storage",
+        )
+        args = parser.parse_args()
+        if args.stage:
+            if ":" in args.stage:
+                stage, substage = args.stage.split(":", 1)
+                if stage == "":
+                    raise ValueError("Stage cannot be empty")
+                if substage == "":
+                    substage = None
+            else:
+                stage, substage = args.stage, None
+            seamless.config.set_stage(stage, substage, workdir=os.getcwd())
+        else:
+            seamless.config.init(workdir=os.getcwd())
         if get_selected_cluster() is not None:
             import seamless_remote.buffer_remote
             import seamless_remote.database_remote
