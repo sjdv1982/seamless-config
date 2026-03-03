@@ -67,13 +67,13 @@ class ClusterQueue:
     name: str
     conda: str
     walltime: str
-    cores: int
     memory: str
     unknown_task_duration: str
     target_duration: str
     maximum_jobs: int
     lifetime_stagger: str = "4m"
     interactive: bool = False
+    exclusive: bool = False
     project: str | None = None
     partition: str | None = None
     tmpdir: str = "/tmp"
@@ -84,6 +84,7 @@ class ClusterQueue:
     job_extra_directives: list[str] | None = None
     job_script_prologue: list[str] | None = None
     dask_resources: dict[str, str] | None = None
+    cores: int | None = None
     job_cores: int | None = None
 
 
@@ -92,6 +93,7 @@ class ClusterQueueWithTemplate:
     name: str
     TEMPLATE: str | None = None
     interactive: bool | None = None
+    exclusive: bool | None = None
     conda: str | None = None
     project: str | None = None
     partition: str | None = None
@@ -158,6 +160,21 @@ class Cluster:
                     queue_dict = queue_with_template_dict
                     queue_dict.pop("TEMPLATE", None)
                 queue = ClusterQueue(**queue_dict)
+                cluster_type = params.get("type")
+                if queue.exclusive:
+                    if queue.job_cores is not None:
+                        raise TypeError(
+                            f"Queue '{queue_name}': 'job_cores' must not be set in exclusive mode"
+                        )
+                    if queue.cores is None and cluster_type == "local":
+                        raise TypeError(
+                            f"Queue '{queue_name}': 'cores' is required for local cluster exclusive mode"
+                        )
+                else:
+                    if queue.cores is None and cluster_type != "local":
+                        raise TypeError(
+                            f"Queue '{queue_name}': 'cores' is required when 'exclusive' is not set"
+                        )
                 queues[queue_name] = queue
             params["queues"] = queues
         return cls(**params)

@@ -309,14 +309,26 @@ def configure_daskserver(
     """
 
     params["walltime"] = queue.walltime
+    params["exclusive"] = queue.exclusive
     params["cores"] = queue.cores
-    params["job_cores"] = queue.job_cores
     if queue.cores is None and clus.type == "local":
         params["cores"] = clus.workers
     params["memory"] = queue.memory
     params["tmpdir"] = queue.tmpdir
     params["partition"] = queue.partition
-    params["job_extra_directives"] = queue.job_extra_directives
+    job_extra_directives = list(queue.job_extra_directives or [])
+    if queue.exclusive:
+        if queue.cores is not None:
+            # Case 1: fixed cores — job_cores equals cores
+            params["job_cores"] = queue.cores
+        else:
+            # Case 2: whole-node — use scheduler-specific exclusive mechanism
+            if clus.type == "slurm":
+                if "--exclusive" not in job_extra_directives:
+                    job_extra_directives.append("--exclusive")
+            elif clus.type == "oar":
+                params["resource_spec"] = "/nodes=1"
+    params["job_extra_directives"] = job_extra_directives or None
     params["project"] = queue.project
     params["memory_per_core_property_name"] = clus.memory_per_core_property_name
     params["job_script_prologue"] = queue.job_script_prologue
