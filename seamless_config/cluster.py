@@ -143,6 +143,7 @@ class Cluster:
             for queue_name, queue_dict0 in queues0.items():
                 queue_dict = {k.replace("-", "_"): v for k, v in queue_dict0.items()}
                 queue_dict["name"] = queue_name
+                explicit_keys = set(queue_dict.keys())
                 queue_with_template = ClusterQueueWithTemplate(**queue_dict)
                 tmpl = queue_with_template.TEMPLATE
                 queue_with_template_dict = dataclasses.asdict(queue_with_template)
@@ -154,13 +155,12 @@ class Cluster:
                     template_queue = queues[tmpl]
                     template_dict = dataclasses.asdict(template_queue)
                     queue_dict = template_dict
-                    # Only propagate fields explicitly set in the child queue;
-                    # skip None (the "not set" sentinel in ClusterQueueWithTemplate)
-                    # so unset child fields inherit from the template.
+                    # Propagate only fields explicitly set in the child's YAML,
+                    # including explicit null values (which allow unsetting template fields).
                     queue_dict.update(
-                        {k: v for k, v in queue_with_template_dict.items() if v is not None}
+                        {k: v for k, v in queue_with_template_dict.items() if k in explicit_keys}
                     )
-                    queue_dict.pop("TEMPLATE")
+                    queue_dict.pop("TEMPLATE", None)
                 else:
                     queue_dict = queue_with_template_dict
                     queue_dict.pop("TEMPLATE", None)
