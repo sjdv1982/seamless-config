@@ -154,7 +154,12 @@ class Cluster:
                     template_queue = queues[tmpl]
                     template_dict = dataclasses.asdict(template_queue)
                     queue_dict = template_dict
-                    queue_dict.update(queue_with_template_dict)
+                    # Only propagate fields explicitly set in the child queue;
+                    # skip None (the "not set" sentinel in ClusterQueueWithTemplate)
+                    # so unset child fields inherit from the template.
+                    queue_dict.update(
+                        {k: v for k, v in queue_with_template_dict.items() if v is not None}
+                    )
                     queue_dict.pop("TEMPLATE")
                 else:
                     queue_dict = queue_with_template_dict
