@@ -364,10 +364,7 @@ def configure_daskserver(
     params["lifetime-stagger"] = queue.lifetime_stagger
     params["lifetime"] = queue.lifetime
     params["dask-resources"] = queue.dask_resources
-    try:
-        params["interactive"] = bool(queue.interactive)
-    except Exception:
-        pass
+    params["interactive"] = queue.interactive
     params["maximum_jobs"] = queue.maximum_jobs
 
     # TODO: params["transformation_throttle"] = ...
@@ -465,10 +462,7 @@ def configure_pure_daskserver(
     params["lifetime-stagger"] = queue_def.lifetime_stagger
     params["lifetime"] = queue_def.lifetime
     params["dask-resources"] = queue_def.dask_resources
-    try:
-        params["interactive"] = bool(queue_def.interactive)
-    except Exception:
-        pass
+    params["interactive"] = queue_def.interactive
     params["maximum_jobs"] = queue_def.maximum_jobs
     if params["maximum_jobs"] is None and clus.type == "local":
         params["maximum_jobs"] = clus.workers
