@@ -158,12 +158,17 @@ class Cluster:
                     # Propagate only fields explicitly set in the child's YAML,
                     # including explicit null values (which allow unsetting template fields).
                     queue_dict.update(
-                        {k: v for k, v in queue_with_template_dict.items() if k in explicit_keys}
+                        {
+                            k: v
+                            for k, v in queue_with_template_dict.items()
+                            if k in explicit_keys
+                        }
                     )
                     queue_dict.pop("TEMPLATE", None)
                 else:
                     queue_dict = queue_with_template_dict
                     queue_dict.pop("TEMPLATE", None)
+
                 queue = ClusterQueue(**queue_dict)
                 cluster_type = params.get("type")
                 if queue.exclusive:
