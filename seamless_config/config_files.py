@@ -26,7 +26,7 @@ from .select import (
 from .tools import define_tools
 
 TOOLS_FILENAME = "tools.yaml"
-CONFIG_FILENAMES: tuple[str, str] = ("seamless.yaml", ".seamless.yaml")
+CONFIG_FILENAMES: tuple[str, str] = ("seamless.yaml", "seamless.profile.yaml")
 INHERIT_COMMAND = "inherit_from_parent"
 COMMAND_LIST_EXAMPLE = "- project: myproject"
 

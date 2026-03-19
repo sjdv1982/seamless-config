@@ -202,11 +202,11 @@ def check_remote_redundancy(cluster: str) -> Optional[str]:
             found_daskserver = True
         if frontend.jobserver is not None and frontend.daskserver is not None:
             raise ConfigurationError(
-                f"Cluster '{cluster}' frontend '{frontend.hostname}' has both jobserver and daskserver; in your .seamless.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
+                f"Cluster '{cluster}' frontend '{frontend.hostname}' has both jobserver and daskserver; in your seamless.profile.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
             )
     if found_jobserver and found_daskserver:
         raise ConfigurationError(
-            f"Cluster '{cluster}' exposes both jobserver and daskserver; in your .seamless.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
+            f"Cluster '{cluster}' exposes both jobserver and daskserver; in your seamless.profile.yaml, specify 'remote: jobserver' or 'remote: daskserver'"
         )
     if found_jobserver:
         return "jobserver"

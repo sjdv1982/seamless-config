@@ -4,7 +4,7 @@ hashserver:
   timeout: 600
   workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGEDIR"
   key_template: 'hashserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGEDIR".strip("/").replace("/", "--")}'
-  command_template: "hashserver --encoding sha-256 --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if '$MODE' == 'rw' else ''}"
+  command_template: "hashserver --port-range {port_start} {port_end} --status-file {status_file} --host {config['network_interface']} --timeout {timeout} {workdir}{' --writable' if '$MODE' == 'rw' else ''}"
   handshake: healthcheck
 
 database:

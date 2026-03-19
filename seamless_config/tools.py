@@ -285,7 +285,7 @@ def configure_daskserver(
     added["port_start"] = frontend.daskserver.port_start
     added["port_end"] = frontend.daskserver.port_end
 
-    # TODO: make queue parameters overrulable in .seamless.yaml (advanced use case)
+    # TODO: make queue parameters overrulable in seamless.profile.yaml (advanced use case)
 
     params = {}
 
