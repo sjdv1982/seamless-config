@@ -4,20 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "seamless-config"
-version = "0.1.0"
+version = "0.1.1"
 description = "Configuration layer and cluster/remote selection tooling for Seamless"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [{name = "Sjoerd de Vries"}]
 dependencies = [
     "PyYAML",
     "seamless-core",
-    "remote-http-launcher",
-    "hashserver",
-    "seamless-database",
-    "seamless-jobserver",
-    "seamless-dask",
+    "seamless-remote",
 ]
 keywords = ["seamless", "configuration", "cluster", "remote-execution"]
 classifiers = [
@@ -26,7 +22,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries",

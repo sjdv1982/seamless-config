@@ -16,10 +16,6 @@ scheduler) into the Seamless runtime before the first transformation runs.
 pip install seamless-config
 ```
 
-Requires Python ≥ 3.12. `seamless-config` depends on `seamless-core`,
-`seamless-remote`, `seamless-dask`, `seamless-jobserver`, `seamless-database`,
-`hashserver`, and `remote-http-launcher`.
-
 ## Quick start
 
 ```python
@@ -306,7 +302,9 @@ previously active remote clients before re-configuring.
 
 When a job runs inside the cluster, it may need to connect back to the same
 remote services. `collect_remote_clients` / `set_remote_clients` serialise and
-restore the active client configuration:
+restore the active client configuration.
+
+*Note: this API is already used by the daskserver. There is no need to do this from user code.*
 
 ```python
 # On the client, before submitting a job:
