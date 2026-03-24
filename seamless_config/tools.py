@@ -53,9 +53,9 @@ def _configure_tool(tool: str, *, added: dict[str, Any], injected: dict[str, Any
         result[key] = value
 
     # Special cases: hostname, ssh_hostname, tunnel
-    # => remove if CLUSTER is equal to get_local_cluster
+    # => remove for local clusters so remote-http-launcher runs locally
     cluster = injected.get("CLUSTER")
-    if cluster == get_local_cluster():
+    if cluster == get_local_cluster() or get_cluster(cluster).type == "local":
         result.pop("hostname")
         result.pop("ssh_hostname", None)
         result.pop("tunnel", None)
@@ -157,7 +157,11 @@ def configure_hashserver(
     added["port_start"] = frontend.hashserver.port_start
     added["port_end"] = frontend.hashserver.port_end
 
-    return _configure_tool("hashserver", added=added, injected=injected)
+    result = _configure_tool("hashserver", added=added, injected=injected)
+    for key in ("network_interface", "conda", "port_start", "port_end"):
+        if result.get(key) is None:
+            result.pop(key, None)
+    return result
 
 
 def configure_database(
@@ -186,7 +190,11 @@ def configure_database(
     added["port_start"] = frontend.database.port_start
     added["port_end"] = frontend.database.port_end
 
-    return _configure_tool("database", added=added, injected=injected)
+    result = _configure_tool("database", added=added, injected=injected)
+    for key in ("network_interface", "conda", "port_start", "port_end"):
+        if result.get(key) is None:
+            result.pop(key, None)
+    return result
 
 
 def configure_jobserver(

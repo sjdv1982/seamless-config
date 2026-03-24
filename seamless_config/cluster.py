@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import dataclasses
@@ -8,19 +10,31 @@ from typing import Literal, Optional, Any
 @dataclass
 class ClusterFrontendHashserver:
     bufferdir: str
-    conda: str
-    network_interface: str
-    port_start: int
-    port_end: int
+    conda: Optional[str] = None
+    network_interface: Optional[str] = None
+    port_start: Optional[int] = None
+    port_end: Optional[int] = None
+
+    def __post_init__(self):
+        if (self.port_start is None) != (self.port_end is None):
+            raise TypeError(
+                "hashserver: 'port_start' and 'port_end' must both be set or both be omitted"
+            )
 
 
 @dataclass
 class ClusterFrontendDatabase:
     database_dir: str
-    conda: str
-    network_interface: str
-    port_start: int
-    port_end: int
+    conda: Optional[str] = None
+    network_interface: Optional[str] = None
+    port_start: Optional[int] = None
+    port_end: Optional[int] = None
+
+    def __post_init__(self):
+        if (self.port_start is None) != (self.port_end is None):
+            raise TypeError(
+                "database: 'port_start' and 'port_end' must both be set or both be omitted"
+            )
 
 
 @dataclass
@@ -48,8 +62,12 @@ class ClusterFrontend:
     daskserver: Optional[ClusterFrontendDaskserver] = None
 
     @classmethod
-    def from_dict(cls, dic: dict[str, Any]):
+    def from_dict(
+        cls, dic: dict[str, Any], *, cluster_type: Literal["local", "slurm", "oar"] | None = None
+    ):
         params = dic.copy()
+        if cluster_type == "local" and "hostname" not in params:
+            params["hostname"] = "localhost"
         if "hashserver" in dic:
             params["hashserver"] = ClusterFrontendHashserver(**dic["hashserver"])
         if "database" in dic:
@@ -117,8 +135,8 @@ class ClusterQueueWithTemplate:
 @dataclass
 class Cluster:
     name: str
-    tunnel: bool
     frontends: list[ClusterFrontend]
+    tunnel: bool = False
     type: Literal["local", "slurm", "oar"] | None = None
     workers: Optional[int] = None
     memory_per_core_property_name: str | None = None
@@ -132,9 +150,12 @@ class Cluster:
     def from_dict(cls, name, dic: dict[str, Any]):
         params = dic.copy()
         params["name"] = name
+        cluster_type = dic.get("type")
         frontends = []
         for frontend_dict in dic["frontends"]:
-            frontend = ClusterFrontend.from_dict(frontend_dict)
+            frontend = ClusterFrontend.from_dict(
+                frontend_dict, cluster_type=cluster_type
+            )
             frontends.append(frontend)
         params["frontends"] = frontends
         queues0 = dic.get("queues", {})
