@@ -10,7 +10,9 @@ import yaml  # type: ignore
 from . import get_workdir
 from .cluster import define_clusters as register_clusters
 from .select import (
+    PROJECT_TOPLEVEL,
     get_stage,
+    get_selected_project,
     reset_execution_before_load,
     reset_persistent_before_load,
     reset_queue_before_load,
@@ -31,6 +33,7 @@ INHERIT_COMMAND = "inherit_from_parent"
 COMMAND_LIST_EXAMPLE = "- project: myproject"
 
 _clusters: dict[str, Any] = {}
+SEAMLESS_CACHE_CLUSTER = "__SEAMLESS_CACHE__"
 
 
 @dataclass(frozen=True)
@@ -182,6 +185,8 @@ def load_config_files() -> None:
     reset_queue_before_load()
     reset_remote_before_load()
     load_tools()
+    if _load_seamless_cache_config():
+        return
     _load_clusters()
     commands = _build_command_invocations(_collect_command_entries())
     priority_commands = [cmd for cmd in commands if cmd.priority]
@@ -194,6 +199,34 @@ def load_config_files() -> None:
 
     for command in non_priority_commands:
         command.execute()
+
+
+def _load_seamless_cache_config() -> bool:
+    from . import get_seamless_cache
+    from .select import select_execution, select_persistent
+
+    cache_dir = get_seamless_cache()
+    if cache_dir is None:
+        return False
+
+    synthetic_clusters = {
+        SEAMLESS_CACHE_CLUSTER: {
+            "type": "local",
+            "frontends": [
+                {
+                    "hashserver": {"bufferdir": cache_dir},
+                    "database": {"database_dir": cache_dir},
+                }
+            ],
+        }
+    }
+    register_clusters(synthetic_clusters)
+    select_cluster(SEAMLESS_CACHE_CLUSTER)
+    if get_selected_project() is None:
+        select_project(PROJECT_TOPLEVEL)
+    select_execution("process")
+    select_persistent(True)
+    return True
 
 
 def _collect_command_entries() -> list[tuple[Path, Any]]:

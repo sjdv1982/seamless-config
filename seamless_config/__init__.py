@@ -16,6 +16,17 @@ _remote_clients_set = False
 _UNSET = object()
 
 
+def get_seamless_cache() -> Optional[str]:
+    """Return the normalized SEAMLESS_CACHE directory, if configured."""
+    value = os.environ.get("SEAMLESS_CACHE")
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    return os.path.abspath(os.path.expanduser(value))
+
+
 def get_workdir():
     """Return the configured workdir or fall back to the current directory."""
     return _workdir if _workdir is not None else os.getcwd()

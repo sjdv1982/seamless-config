@@ -1,4 +1,7 @@
+from pathlib import Path
 from typing import Optional
+
+PROJECT_TOPLEVEL = "__TOPLEVEL__"
 
 _current_cluster: Optional[str] = None
 _current_project: Optional[str] = None
@@ -130,6 +133,10 @@ def select_remote(remote: Optional[str], *, source: str = "manual") -> None:
 
 def get_stage():
     return _current_stage
+
+
+def get_selected_project() -> Optional[str]:
+    return _current_project
 
 
 def get_execution() -> str:
@@ -266,6 +273,14 @@ def get_current(
         project = _current_project
         if project is None:
             raise ConfigurationError("No project defined")
+    if project == PROJECT_TOPLEVEL:
+        from . import get_workdir
+
+        project = Path(get_workdir()).resolve().name
+        if not project:
+            raise ConfigurationError(
+                "Cannot derive project name from the top-level workdir"
+            )
 
     if subproject is None:
         subproject = _current_subproject

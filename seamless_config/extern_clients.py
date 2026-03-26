@@ -113,6 +113,10 @@ def set_remote_clients(
 
 
 def set_remote_clients_from_env(include_dask: bool) -> bool:
+    from . import get_seamless_cache
+
+    if get_seamless_cache() is not None:
+        return False
     env_remote_clients = os.environ.get("SEAMLESS_REMOTE_CLIENTS")
     if env_remote_clients is None:
         return False
