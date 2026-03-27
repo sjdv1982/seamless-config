@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional
 
 PROJECT_TOPLEVEL = "__TOPLEVEL__"
@@ -273,14 +272,6 @@ def get_current(
         project = _current_project
         if project is None:
             raise ConfigurationError("No project defined")
-    if project == PROJECT_TOPLEVEL:
-        from . import get_workdir
-
-        project = Path(get_workdir()).resolve().name
-        if not project:
-            raise ConfigurationError(
-                "Cannot derive project name from the top-level workdir"
-            )
 
     if subproject is None:
         subproject = _current_subproject
