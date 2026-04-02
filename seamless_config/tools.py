@@ -53,9 +53,11 @@ def _configure_tool(tool: str, *, added: dict[str, Any], injected: dict[str, Any
         result[key] = value
 
     # Special cases: hostname, ssh_hostname, tunnel
-    # => remove for local clusters so remote-http-launcher runs locally
+    # => remove only for the actual local cluster so remote-http-launcher runs locally.
+    # A cluster with type "local" may still live on a remote frontend and should
+    # keep its hostname so the launcher uses SSH there and starts a LocalCluster.
     cluster = injected.get("CLUSTER")
-    if cluster == get_local_cluster() or get_cluster(cluster).type == "local":
+    if cluster == get_local_cluster():
         result.pop("hostname")
         result.pop("ssh_hostname", None)
         result.pop("tunnel", None)

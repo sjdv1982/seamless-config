@@ -196,6 +196,64 @@ def test_configure_pure_daskserver_uses_queue_in_key(monkeypatch, tmp_path):
     assert "default" in config["key"]
 
 
+def test_configure_daskserver_keeps_hostname_for_remote_local_cluster(
+    monkeypatch, tmp_path
+):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "remote-local-cluster"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {"default": _queue_defaults()}
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    clusters_path = tmp_path / ".seamless" / "clusters.yaml"
+    cluster_def = yaml.safe_load(clusters_path.read_text(encoding="utf-8"))
+    cluster_def["demo"]["tunnel"] = True
+    frontend = cluster_def["demo"]["frontends"][0]
+    frontend["hostname"] = "remote-frontend"
+    frontend["ssh_hostname"] = "remote-login"
+    clusters_path.write_text(yaml.safe_dump(cluster_def), encoding="utf-8")
+    seamless_config.set_workdir(workdir)
+    from seamless_config.config_files import load_config_files
+
+    load_config_files()
+    import seamless_config.tools as tools
+
+    config = tools.configure_daskserver(cluster="demo", project="demo")
+    assert config["cluster_string"] == "distributed::LocalCluster"
+    assert config["hostname"] == "remote-frontend"
+    assert config["ssh_hostname"] == "remote-login"
+    assert config["tunnel"] is True
+
+
+def test_configure_daskserver_drops_hostname_for_actual_local_cluster(
+    monkeypatch, tmp_path
+):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "actual-local-cluster"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {"default": _queue_defaults()}
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    clusters_path = tmp_path / ".seamless" / "clusters.yaml"
+    cluster_def = yaml.safe_load(clusters_path.read_text(encoding="utf-8"))
+    cluster_def["local_cluster"] = "demo"
+    cluster_def["demo"]["tunnel"] = True
+    frontend = cluster_def["demo"]["frontends"][0]
+    frontend["hostname"] = "local-frontend"
+    frontend["ssh_hostname"] = "local-login"
+    clusters_path.write_text(yaml.safe_dump(cluster_def), encoding="utf-8")
+    seamless_config.set_workdir(workdir)
+    from seamless_config.config_files import load_config_files
+
+    load_config_files()
+    import seamless_config.tools as tools
+
+    config = tools.configure_daskserver(cluster="demo", project="demo")
+    assert "hostname" not in config
+    assert "ssh_hostname" not in config
+    assert "tunnel" not in config
+
+
 def test_remote_execution_requires_cluster(monkeypatch, tmp_path):
     _reset_state(monkeypatch)
     workdir = tmp_path / "remote-execution"
