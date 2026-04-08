@@ -11,6 +11,7 @@ _current_execution: str = "process"
 _current_queue: Optional[str] = None
 _current_remote: Optional[str] = None
 _current_persistent: Optional[bool] = None
+_current_nparallel: Optional[int] = None
 _execution_source: Optional[str] = None  # "command" or "manual"
 _queue_source: Optional[str] = None  # "command" or "manual"
 _queue_cluster: Optional[str] = None
@@ -130,6 +131,13 @@ def select_remote(remote: Optional[str], *, source: str = "manual") -> None:
     _remote_source = source
 
 
+def select_nparallel(nparallel: int) -> None:
+    global _current_nparallel
+    if isinstance(nparallel, bool) or not isinstance(nparallel, int) or nparallel < 1:
+        raise ValueError("nparallel must be a positive integer")
+    _current_nparallel = nparallel
+
+
 def get_stage():
     return _current_stage
 
@@ -187,6 +195,15 @@ def get_queue(cluster: Optional[str] = None) -> Optional[str]:
 
 def get_remote() -> Optional[str]:
     return _current_remote
+
+
+def get_nparallel() -> int:
+    if _current_nparallel is None:
+        raise ConfigurationError(
+            "nparallel is not set. "
+            "Add 'nparallel: <N>' to seamless.profile.yaml or call seamless_config.set_nparallel(N)."
+        )
+    return _current_nparallel
 
 
 def check_remote_redundancy(cluster: str) -> Optional[str]:

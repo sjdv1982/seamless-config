@@ -254,6 +254,18 @@ def set_substage(substage: Optional[str] = None):
     return set_stage(stage, substage)
 
 
+def set_nparallel(nparallel: int) -> None:
+    from .select import select_nparallel
+
+    select_nparallel(nparallel)
+
+
+def get_nparallel() -> int:
+    from .select import get_nparallel as _get_nparallel
+
+    return _get_nparallel()
+
+
 def init(*, workdir=_UNSET):
     """
     Initializes the configuration, loading and evaluating all configuration.
@@ -277,6 +289,8 @@ __all__ = [
     "init",
     "set_stage",
     "set_substage",
+    "set_nparallel",
+    "get_nparallel",
     "set_workdir",
     "collect_remote_clients",
     "set_remote_clients",

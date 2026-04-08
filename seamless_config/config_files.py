@@ -12,6 +12,7 @@ from .cluster import define_clusters as register_clusters
 from .select import (
     PROJECT_TOPLEVEL,
     get_stage,
+    select_nparallel,
     get_selected_project,
     reset_execution_before_load,
     reset_persistent_before_load,
@@ -132,6 +133,12 @@ def _handle_subproject(value: Any, source: Path) -> None:
     select_subproject(value)
 
 
+def _handle_nparallel(value: Any, source: Path) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{source}: 'nparallel' command expects a positive integer")
+    select_nparallel(value)
+
+
 def _handle_clusters(value: Any, source: Path) -> None:
     if not isinstance(value, dict):
         raise ValueError(f"{source}: 'clusters' command expects a mapping")
@@ -146,6 +153,7 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
     "persistent": CommandSpec(handler=_handle_persistent),
     "project": CommandSpec(handler=_handle_project),
     "subproject": CommandSpec(handler=_handle_subproject),
+    "nparallel": CommandSpec(handler=_handle_nparallel),
     "clusters": CommandSpec(handler=_handle_clusters, priority=True),
 }
 
