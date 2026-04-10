@@ -1,6 +1,9 @@
 hashserver:
   ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
   INJECTED: [CLUSTER, BUFFERDIR, PROJECTSUBDIR, STAGEDIR, MODE]
+  log_level: minimal
+  log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGEDIR/hashserver.log"
+  debug_log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGEDIR/hashserver.debug.log"
   timeout: 600
   workdir_template: "$BUFFERDIR$PROJECTSUBDIR$STAGEDIR"
   key_template: 'hashserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGEDIR".strip("/").replace("/", "--")}'
@@ -10,6 +13,9 @@ hashserver:
 database:
   ADDED: [hostname, network_interface, conda, port_start, port_end, tunnel]
   INJECTED: [CLUSTER, DATABASE_DIR, PROJECTSUBDIR, STAGEDIR, MODE]
+  log_level: minimal
+  log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGEDIR/database.log"
+  debug_log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGEDIR/database.debug.log"
   timeout: 600
   workdir_template: "$DATABASE_DIR$PROJECTSUBDIR$STAGEDIR"
   key_template: 'database-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGEDIR".strip("/").replace("/", "--")}'
@@ -29,6 +35,9 @@ jobserver:
       file_parameters,
     ]
   INJECTED: [CLUSTER, PROJECTSUBDIR, STAGESUBDIR]
+  log_level: minimal
+  log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGESUBDIR/jobserver.log"
+  debug_log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGESUBDIR/jobserver.debug.log"
   timeout: 600
   workdir_template: "/tmp"
   key_template: 'jobserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
@@ -48,6 +57,9 @@ daskserver:
       file_parameters,
     ]
   INJECTED: [CLUSTER, PROJECTSUBDIR, STAGESUBDIR]
+  log_level: minimal
+  log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGESUBDIR/daskserver.log"
+  debug_log_file_template: "~/.remote-http-launcher/logs/$CLUSTER$PROJECTSUBDIR$STAGESUBDIR/daskserver.debug.log"
   timeout: 600
   workdir_template: "/tmp"
   key_template: 'daskserver-$CLUSTER-$MODE-{"$PROJECTSUBDIR$STAGESUBDIR".strip("/").replace("/", "--")}'
@@ -69,6 +81,9 @@ pure_daskserver:
       file_parameters,
     ]
   INJECTED: [CLUSTER, QUEUE]
+  log_level: minimal
+  log_file_template: "~/.remote-http-launcher/logs/$CLUSTER/pure-daskserver-$QUEUE.log"
+  debug_log_file_template: "~/.remote-http-launcher/logs/$CLUSTER/pure-daskserver-$QUEUE.debug.log"
   timeout: 600
   workdir_template: "/tmp"
   key_template: "pure-daskserver-$CLUSTER-$QUEUE"
