@@ -2,6 +2,7 @@ import yaml
 import pytest
 
 import seamless_config
+import seamless_config.cluster as cluster
 import seamless_config.select as select
 import seamless_config.tools as tools
 
@@ -28,6 +29,7 @@ def _reset_state(monkeypatch):
     monkeypatch.setattr(select, "_queue_cluster", None)
     monkeypatch.setattr(select, "_current_remote", None)
     monkeypatch.setattr(select, "_remote_source", None)
+    monkeypatch.setattr(cluster, "_local_cluster", None)
 
 
 def _write_clusters_yaml(base_dir):
@@ -110,3 +112,56 @@ def test_configure_hashserver_smoke(monkeypatch, tmp_path, mode, expects_writabl
     assert config["handshake"] == "healthcheck"
     assert f"if '{mode}' == 'rw'" in config["command"]
     assert f"-{mode}-" in config["key"]
+
+
+def test_cluster_named_local_is_not_special(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    _disable_remote_launch(monkeypatch)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    workdir = tmp_path / "workdir"
+    workdir.mkdir()
+    clusters_dir = tmp_path / ".seamless"
+    clusters_dir.mkdir(parents=True, exist_ok=True)
+    cluster_def = {
+        "local_cluster": "actual-local",
+        "actual-local": {
+            "type": "local",
+            "frontends": [{"hashserver": {"bufferdir": "/tmp/actual-local"}}],
+        },
+        "local": {
+            "type": "local",
+            "frontends": [
+                {
+                    "hostname": "remote-frontend",
+                    "hashserver": {
+                        "bufferdir": "/tmp/local-name-buffer",
+                        "conda": "hashserver",
+                    },
+                }
+            ],
+        },
+    }
+    (clusters_dir / "clusters.yaml").write_text(
+        yaml.safe_dump(cluster_def), encoding="utf-8"
+    )
+    seamless_config.set_workdir(workdir)
+
+    seamless_config.init()
+
+    config = tools.configure_hashserver("rw", cluster="local", project="myproject")
+    assert config["hostname"] == "remote-frontend"
+    assert config["conda"] == "hashserver"
+
+
+def test_seamless_cache_hashserver_is_actual_local_cluster(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    _disable_remote_launch(monkeypatch)
+    monkeypatch.setenv("SEAMLESS_CACHE", str(tmp_path / "cache"))
+
+    seamless_config.init()
+
+    config = tools.configure_hashserver("rw")
+    assert cluster.get_local_cluster() == "__SEAMLESS_CACHE__"
+    assert "hostname" not in config
+    assert "ssh_hostname" not in config
+    assert "tunnel" not in config

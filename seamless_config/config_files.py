@@ -218,6 +218,7 @@ def _load_seamless_cache_config() -> bool:
         return False
 
     synthetic_clusters = {
+        "local_cluster": SEAMLESS_CACHE_CLUSTER,
         SEAMLESS_CACHE_CLUSTER: {
             "type": "local",
             "frontends": [
