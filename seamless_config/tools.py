@@ -252,7 +252,7 @@ def configure_daskserver(
 ):
     dummy_mode = "rw"  # not used for this tool
     from . import ConfigurationError
-    from .select import get_queue
+    from .select import get_node, get_queue
 
     clus, frontend, injected = _prepare_tool(
         "daskserver",
@@ -291,6 +291,7 @@ def configure_daskserver(
     if queue_name not in queues:
         raise ConfigurationError(f"Cluster '{clus.name}' has no queue '{queue_name}'")
     queue = queues[queue_name]
+    requested_node = get_node()
     added["conda"] = queue.conda
     added["port_start"] = frontend.daskserver.port_start
     added["port_end"] = frontend.daskserver.port_end
@@ -327,6 +328,18 @@ def configure_daskserver(
     params["tmpdir"] = queue.tmpdir
     params["partition"] = queue.partition
     job_extra_directives = list(queue.job_extra_directives or [])
+    resource_spec = None
+    if requested_node is not None:
+        if clus.type == "slurm":
+            nodelist_flag = f"--nodelist={requested_node}"
+            if nodelist_flag not in job_extra_directives:
+                job_extra_directives.append(nodelist_flag)
+        elif clus.type == "oar":
+            job_extra_directives.extend(["-p", f"host='{requested_node}'"])
+        else:
+            raise ConfigurationError(
+                f"Node selection is not supported for cluster type '{clus.type}'"
+            )
     if queue.exclusive:
         if queue.cores is not None:
             # Case 1: fixed cores — job_cores equals cores
@@ -337,7 +350,9 @@ def configure_daskserver(
                 if "--exclusive" not in job_extra_directives:
                     job_extra_directives.append("--exclusive")
             elif clus.type == "oar":
-                params["resource_spec"] = "/nodes=1"
+                resource_spec = "/nodes=1"
+    if resource_spec is not None:
+        params["resource_spec"] = resource_spec
     params["job_extra_directives"] = job_extra_directives or None
     params["project"] = queue.project
     params["memory_per_core_property_name"] = clus.memory_per_core_property_name
@@ -394,7 +409,7 @@ def configure_pure_daskserver(
     frontend_name=None,
 ):
     from . import ConfigurationError
-    from .select import get_queue, get_selected_cluster
+    from .select import get_node, get_queue, get_selected_cluster
 
     if cluster is None:
         cluster = get_selected_cluster()
@@ -443,6 +458,7 @@ def configure_pure_daskserver(
         raise ConfigurationError(f"Cluster '{clus.name}' has no queue '{queue_name}'")
     queue_def = queues[queue_name]
     injected["QUEUE"] = queue_name
+    requested_node = get_node()
     added["conda"] = queue_def.conda
     added["port_start"] = frontend.daskserver.port_start
     added["port_end"] = frontend.daskserver.port_end
@@ -457,7 +473,24 @@ def configure_pure_daskserver(
     params["memory"] = queue_def.memory
     params["tmpdir"] = queue_def.tmpdir
     params["partition"] = queue_def.partition
-    params["job_extra_directives"] = queue_def.job_extra_directives
+    job_extra_directives = list(queue_def.job_extra_directives or [])
+    resource_spec = None
+    if requested_node is not None:
+        if clus.type == "slurm":
+            nodelist_flag = f"--nodelist={requested_node}"
+            if nodelist_flag not in job_extra_directives:
+                job_extra_directives.append(nodelist_flag)
+        elif clus.type == "oar":
+            job_extra_directives.extend(["-p", f"host='{requested_node}'"])
+        else:
+            raise ConfigurationError(
+                f"Node selection is not supported for cluster type '{clus.type}'"
+            )
+    if queue_def.exclusive and queue_def.cores is None and clus.type == "oar":
+        resource_spec = "/nodes=1"
+    params["job_extra_directives"] = job_extra_directives or None
+    if resource_spec is not None:
+        params["resource_spec"] = resource_spec
     params["project"] = queue_def.project
     params["memory_per_core_property_name"] = clus.memory_per_core_property_name
     params["job_script_prologue"] = queue_def.job_script_prologue

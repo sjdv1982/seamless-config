@@ -11,14 +11,19 @@ _current_execution: str = "process"
 _current_queue: Optional[str] = None
 _current_remote: Optional[str] = None
 _current_persistent: Optional[bool] = None
+_current_record: bool = False
+_current_node: Optional[str] = None
 _current_nparallel: Optional[int] = None
 _execution_source: Optional[str] = None  # "command" or "manual"
 _queue_source: Optional[str] = None  # "command" or "manual"
 _queue_cluster: Optional[str] = None
 _remote_source: Optional[str] = None  # "command" or "manual"
 _persistent_source: Optional[str] = None  # "command" or "manual"
+_record_source: Optional[str] = None  # "command" or "manual"
+_node_source: Optional[str] = None  # "command" or "manual"
 _execution_command_seen: bool = False
 _persistent_command_seen: bool = False
+_record_command_seen: bool = False
 
 EXECUTION_MODES = ("process", "spawn", "remote")
 REMOTE_TARGETS = (None, "daskserver", "jobserver")
@@ -97,6 +102,16 @@ def select_persistent(persistent: bool, *, source: str = "manual") -> None:
         _persistent_command_seen = True
 
 
+def select_record(record: bool, *, source: str = "manual") -> None:
+    global _current_record, _record_source, _record_command_seen
+    if not isinstance(record, bool):
+        raise ValueError("record must be a boolean")
+    _current_record = record
+    _record_source = source
+    if source == "command":
+        _record_command_seen = True
+
+
 def select_queue(queue: str, *, source: str = "manual") -> None:
     global _current_queue, _queue_source, _queue_cluster
     if not isinstance(queue, str):
@@ -129,6 +144,17 @@ def select_remote(remote: Optional[str], *, source: str = "manual") -> None:
         raise ValueError(f"remote must be one of: None, {valid}")
     _current_remote = remote
     _remote_source = source
+
+
+def select_node(node: Optional[str], *, source: str = "manual") -> None:
+    global _current_node, _node_source
+    if node is not None:
+        if not isinstance(node, str):
+            raise ValueError("node must be a string or null")
+        if not node.strip():
+            raise ValueError("node must not be empty")
+    _current_node = node
+    _node_source = source
 
 
 def select_nparallel(nparallel: int) -> None:
@@ -172,6 +198,10 @@ def get_persistent(cluster: Optional[str] = None) -> bool:
     return bool(cluster)
 
 
+def get_record() -> bool:
+    return _current_record
+
+
 def get_queue(cluster: Optional[str] = None) -> Optional[str]:
     if cluster is None:
         cluster = _current_cluster
@@ -195,6 +225,10 @@ def get_queue(cluster: Optional[str] = None) -> Optional[str]:
 
 def get_remote() -> Optional[str]:
     return _current_remote
+
+
+def get_node() -> Optional[str]:
+    return _current_node
 
 
 def get_nparallel() -> int:
@@ -267,6 +301,21 @@ def reset_persistent_before_load() -> None:
     if _persistent_source == "command":
         _persistent_source = None
         _current_persistent = None
+
+
+def reset_record_before_load() -> None:
+    global _current_record, _record_source, _record_command_seen
+    _record_command_seen = False
+    if _record_source == "command":
+        _record_source = None
+        _current_record = False
+
+
+def reset_node_before_load() -> None:
+    global _current_node, _node_source
+    if _node_source == "command":
+        _node_source = None
+        _current_node = None
 
 
 def get_selected_cluster() -> Optional[str]:

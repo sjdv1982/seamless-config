@@ -24,11 +24,16 @@ def _reset_state(monkeypatch):
     monkeypatch.setattr(select, "_current_persistent", None)
     monkeypatch.setattr(select, "_persistent_source", None)
     monkeypatch.setattr(select, "_persistent_command_seen", False)
+    monkeypatch.setattr(select, "_current_record", False)
+    monkeypatch.setattr(select, "_record_source", None)
+    monkeypatch.setattr(select, "_record_command_seen", False)
     monkeypatch.setattr(select, "_current_queue", None)
     monkeypatch.setattr(select, "_queue_source", None)
     monkeypatch.setattr(select, "_queue_cluster", None)
     monkeypatch.setattr(select, "_current_remote", None)
     monkeypatch.setattr(select, "_remote_source", None)
+    monkeypatch.setattr(select, "_current_node", None)
+    monkeypatch.setattr(select, "_node_source", None)
 
 
 def _write_clusters_yaml(
@@ -165,6 +170,27 @@ def test_persistent_command_overrides_default(monkeypatch, tmp_path):
     assert not any("No cluster defined; running without persistence" in msg for msg in messages)
 
 
+def test_record_defaults_false(monkeypatch):
+    _reset_state(monkeypatch)
+    assert select.get_record() is False
+
+
+def test_record_command_sets_strict_mode(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "record-command"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (workdir / "seamless.yaml").write_text(
+        "- execution: process\n- record: true\n",
+        encoding="utf-8",
+    )
+    seamless_config.set_workdir(workdir)
+    from seamless_config.config_files import load_config_files
+
+    load_config_files()
+    assert select.get_record() is True
+
+
 def test_explicit_persistent_true_without_cluster_errors(monkeypatch, tmp_path):
     _reset_state(monkeypatch)
     workdir = tmp_path / "persistent-without-cluster"
@@ -252,6 +278,29 @@ def test_configure_daskserver_drops_hostname_for_actual_local_cluster(
     assert "hostname" not in config
     assert "ssh_hostname" not in config
     assert "tunnel" not in config
+
+
+def test_configure_daskserver_injects_selected_node_for_slurm(monkeypatch, tmp_path):
+    _reset_state(monkeypatch)
+    workdir = tmp_path / "node-slurm"
+    workdir.mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    queues = {"default": _queue_defaults()}
+    _write_clusters_yaml(tmp_path, queues, default_queue="default")
+    clusters_path = tmp_path / ".seamless" / "clusters.yaml"
+    cluster_def = yaml.safe_load(clusters_path.read_text(encoding="utf-8"))
+    cluster_def["demo"]["type"] = "slurm"
+    clusters_path.write_text(yaml.safe_dump(cluster_def), encoding="utf-8")
+    seamless_config.set_workdir(workdir)
+    from seamless_config.config_files import load_config_files
+
+    load_config_files()
+    select.select_node("node123")
+    import seamless_config.tools as tools
+
+    config = tools.configure_daskserver(cluster="demo", project="demo")
+    directives = config["file_parameters"]["job_extra_directives"]
+    assert "--nodelist=node123" in directives
 
 
 def test_remote_execution_requires_cluster(monkeypatch, tmp_path):

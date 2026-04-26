@@ -12,7 +12,10 @@ from .cluster import define_clusters as register_clusters
 from .select import (
     PROJECT_TOPLEVEL,
     get_stage,
+    reset_node_before_load,
+    reset_record_before_load,
     select_nparallel,
+    select_node,
     get_selected_project,
     reset_execution_before_load,
     reset_persistent_before_load,
@@ -23,6 +26,7 @@ from .select import (
     select_persistent,
     select_project,
     select_queue,
+    select_record,
     select_remote,
     select_subproject,
 )
@@ -121,6 +125,12 @@ def _handle_persistent(value: Any, source: Path) -> None:
     select_persistent(value, source="command")
 
 
+def _handle_record(value: Any, source: Path) -> None:
+    if not isinstance(value, bool):
+        raise ValueError(f"{source}: 'record' command expects a boolean value")
+    select_record(value, source="command")
+
+
 def _handle_project(value: Any, source: Path) -> None:
     if not isinstance(value, str):
         raise ValueError(f"{source}: 'project' command expects a string value")
@@ -139,6 +149,12 @@ def _handle_nparallel(value: Any, source: Path) -> None:
     select_nparallel(value)
 
 
+def _handle_node(value: Any, source: Path) -> None:
+    if value is not None and not isinstance(value, str):
+        raise ValueError(f"{source}: 'node' command expects a string value or null")
+    select_node(value, source="command")
+
+
 def _handle_clusters(value: Any, source: Path) -> None:
     if not isinstance(value, dict):
         raise ValueError(f"{source}: 'clusters' command expects a mapping")
@@ -151,9 +167,11 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
     "queue": CommandSpec(handler=_handle_queue),
     "remote": CommandSpec(handler=_handle_remote),
     "persistent": CommandSpec(handler=_handle_persistent),
+    "record": CommandSpec(handler=_handle_record),
     "project": CommandSpec(handler=_handle_project),
     "subproject": CommandSpec(handler=_handle_subproject),
     "nparallel": CommandSpec(handler=_handle_nparallel),
+    "node": CommandSpec(handler=_handle_node),
     "clusters": CommandSpec(handler=_handle_clusters, priority=True),
 }
 
@@ -192,6 +210,8 @@ def load_config_files() -> None:
     reset_persistent_before_load()
     reset_queue_before_load()
     reset_remote_before_load()
+    reset_record_before_load()
+    reset_node_before_load()
     load_tools()
     if _load_seamless_cache_config():
         return
