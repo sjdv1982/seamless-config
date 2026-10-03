@@ -1,4 +1,6 @@
 - project: seamless-test
+- cluster: local
+- execution: process
 #
 #
 # example for seamless.profile.yaml:
